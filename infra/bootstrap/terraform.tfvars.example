@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (git-ignored) and fill in.
+github_owner = "EShadwick"
+github_repo  = "shart-bag-concept-site"
+alert_email  = "<YOUR_EMAIL>"
+
+# Optional
+# aws_region                  = "us-east-1"
+# monthly_budget_usd          = "5"
+# create_github_oidc_provider = false   # only if the account already has a GitHub OIDC provider

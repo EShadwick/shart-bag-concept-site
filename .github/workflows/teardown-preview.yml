@@ -1,0 +1,89 @@
+name: Tear down preview
+
+# Manual only. Saves the client feedback as a CSV artifact, then deletes every
+# preview resource in AWS. Type "teardown" to confirm.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "teardown" to delete the preview environment'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: preview-environment
+  cancel-in-progress: false
+
+jobs:
+  teardown:
+    if: inputs.confirm == 'teardown'
+    runs-on: ubuntu-latest
+    environment: preview
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_preview_password: ${{ secrets.PREVIEW_PASSWORD }}
+      TABLE: shart-bag-preview-feedback
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: teardown-preview-${{ github.run_id }}
+
+      - name: Export client feedback before deleting it
+        continue-on-error: true
+        run: |
+          if aws dynamodb describe-table --table-name "$TABLE" > /dev/null 2>&1; then
+            aws dynamodb scan --table-name "$TABLE" --output json > feedback.json
+            node scripts/feedback-to-csv.mjs feedback.json > feedback.csv
+            echo "Exported $(($(wc -l < feedback.csv) - 1)) feedback rows"
+          else
+            echo "No feedback table found, nothing to export"
+          fi
+
+      - uses: actions/upload-artifact@v7
+        if: hashFiles('feedback.csv') != ''
+        with:
+          name: client-feedback-${{ github.run_id }}
+          path: feedback.csv
+          retention-days: 90
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.16.5"
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra/preview
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=preview/terraform.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="use_lockfile=true" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform destroy
+        working-directory: infra/preview
+        run: terraform destroy -auto-approve
+
+      - name: Summary
+        run: |
+          {
+            echo "## Preview deleted"
+            echo ""
+            echo "The site, CDN, API, password gate and feedback table are gone. The old link no longer works."
+            echo "If any feedback was collected, it is attached to this run as a CSV."
+          } >> "$GITHUB_STEP_SUMMARY"

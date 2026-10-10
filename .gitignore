@@ -1,0 +1,19 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+infra/preview/.build/
+
+# Exports and local files
+feedback.json
+feedback.csv
+.env
+.DS_Store
+Thumbs.db

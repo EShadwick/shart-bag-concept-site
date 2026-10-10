@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Operation White Pants</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Limelight&family=Special+Elite&display=swap">
+<style>
+/* Layout: a dark picture house; one 4:3 silver screen, projector controls under it, the mission paperwork below. */
+:root{
+  /* house (page) */
+  --house:#0f0e0c;
+  --house-2:#1b1915;
+  --glow:rgba(233,226,208,.09);
+  --edge:#34312b;
+  --silver:#ebe7dd;
+  --dim:#a39d91;
+  /* film stock (stage) */
+  --black:#060606;
+  --ink:#141312;
+  --g1:#3a3734;
+  --g2:#6b6762;
+  --g3:#9c978f;
+  --g4:#cfcac1;
+  --paper:#efece4;
+  --white:#fbfaf6;
+  --sky:#d9d5cc;
+  --plank:#e7e3da;
+  /* type */
+  --font-display:'Limelight','Didot','Bodoni 72',Georgia,serif;
+  --font-title:'IM Fell English','Iowan Old Style','Palatino Linotype',Georgia,serif;
+  --font-file:'Special Elite','Courier Prime','Courier New',monospace;
+  color-scheme:dark;
+}
+html{background:var(--house)}
+body{margin:0}
+[hidden]{display:none!important}
+.back{align-self:flex-start;font-family:var(--font-file);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);text-decoration:none;border:1px solid var(--edge);border-radius:6px;padding:7px 12px}
+.back:hover{color:var(--silver);border-color:var(--dim)}
+.back:focus-visible{outline:2px solid var(--silver);outline-offset:2px}
+body{
+  background:radial-gradient(ellipse 70% 40% at 50% 0%,var(--glow),transparent 70%),var(--house);
+  color:var(--silver);
+  font-family:var(--font-title);
+  font-size:17px;
+  line-height:1.5;
+  min-height:100vh;
+}
+.house{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:28px 56px;display:flex;flex-direction:column;gap:22px}
+.marquee{display:flex;flex-direction:column;gap:6px;text-align:center}
+.eyebrow{font-family:var(--font-file);font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--font-display);font-weight:400;font-size:clamp(30px,6vw,52px);line-height:1.05;margin:0;letter-spacing:.02em;text-wrap:balance}
+.billing{margin:0;font-style:italic;color:var(--dim);font-size:16px;text-wrap:balance}
+
+.screen{
+  position:relative;
+  width:min(100%,calc(76vh * 4 / 3));
+  aspect-ratio:4/3;
+  max-width:100%;
+  margin:0 auto;
+  background:var(--black);
+  border:1px solid var(--edge);
+  box-shadow:0 0 0 6px var(--house-2),0 0 90px var(--glow);
+  overflow:hidden;
+  cursor:pointer;
+}
+.screen:focus-visible{outline:2px solid var(--silver);outline-offset:8px}
+.screen svg,.screen canvas,.screen .vignette{position:absolute;inset:0;width:100%;height:100%;display:block}
+.screen canvas,.screen .vignette{pointer-events:none}
+.vignette{background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55) 100%)}
+.bigplay{
+  position:absolute;left:50%;bottom:5%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:10px;
+  padding:10px 20px 10px 14px;border-radius:999px;
+  background:var(--paper);color:var(--ink);border:2px solid var(--ink);
+  font-family:var(--font-file);font-size:clamp(13px,2.4vw,16px);letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;box-shadow:0 4px 0 var(--ink);
+}
+.bigplay:hover{background:var(--white)}
+.bigplay:active{transform:translateX(-50%) translateY(2px);box-shadow:0 2px 0 var(--ink)}
+.bigplay:focus-visible{outline:3px solid var(--silver);outline-offset:3px}
+.bigplay svg{position:static;width:22px;height:22px;flex:none}
+.bigplay span{white-space:nowrap}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;width:min(100%,calc(76vh * 4 / 3));margin:0 auto}
+.controls button{
+  font-family:var(--font-file);font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--house-2);color:var(--silver);border:1px solid var(--edge);border-radius:6px;
+  padding:8px 12px;cursor:pointer;min-width:0
+}
+.controls button:hover{border-color:var(--dim)}
+.controls button:focus-visible{outline:2px solid var(--silver);outline-offset:2px}
+.scrub{flex:1 1 180px;min-width:0;display:flex;align-items:center;gap:10px}
+.scrub input{flex:1;min-width:0;accent-color:var(--silver)}
+.time{font-family:var(--font-file);font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.paperwork{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px;margin-top:6px;align-items:start}
+.sheet{background:var(--house-2);border:1px solid var(--edge);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.sheet h2{margin:0;font-family:var(--font-file);font-weight:400;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.missions{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.missions li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1px dashed var(--edge);padding-bottom:7px}
+.missions li:last-child{border-bottom:0;padding-bottom:0}
+.missions .no{font-family:var(--font-file);font-size:12px;color:var(--dim);margin-right:8px;font-variant-numeric:tabular-nums}
+.status{font-family:var(--font-file);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.status.now{color:var(--ink);background:var(--paper);padding:2px 8px;border-radius:3px}
+.record{margin:0;font-size:15.5px;color:var(--dim)}
+details{min-width:0}
+summary{cursor:pointer;font-family:var(--font-file);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+summary:focus-visible{outline:2px solid var(--silver);outline-offset:3px}
+.shots{margin:12px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px;font-size:15.5px}
+.shots li{display:grid;grid-template-columns:3.2em 1fr;gap:4px;align-items:baseline}
+.shots .tc{font-family:var(--font-file);font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums;margin-right:6px}
+
+/* stage art */
+.poo{fill:var(--g2);stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round}
+.shine{fill:var(--paper);opacity:.55}
+.ring{fill:none;stroke:var(--g3);stroke-width:3.5}
+.eyew{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.pupil{fill:var(--ink)}
+.lid{fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+.mouth{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.mouthfill{fill:var(--ink)}
+.strap{fill:var(--ink)}
+.gframe{fill:var(--paper);stroke:var(--ink);stroke-width:2}
+.lens{fill:var(--g4);fill-opacity:.5;stroke:var(--ink);stroke-width:1.2}
+.glint{fill:var(--white)}
+.diaper{fill:var(--white);stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round}
+.stitch{fill:none;stroke:var(--g3);stroke-width:1.6;stroke-dasharray:4 4}
+.tab{fill:var(--g1);stroke:var(--ink);stroke-width:2}
+.skbody{fill:var(--g1);stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.skl{fill:none;stroke:var(--g3);stroke-width:3;stroke-linecap:round}
+.chev{fill:none;stroke:var(--paper);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.hat{fill:var(--g4);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.band{fill:var(--g2)}
+.pinch{fill:none;stroke:var(--g2);stroke-width:2;stroke-linecap:round}
+.brow{fill:none;stroke:var(--ink);stroke-width:3.5;stroke-linecap:round}
+.sarm{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.glove{fill:var(--white);stroke:var(--ink);stroke-width:2}
+.stink{fill:none;stroke:var(--g2);stroke-width:3;stroke-linecap:round}
+.cloudo{fill:var(--g2)}
+.cloudi{fill:var(--g4)}
+.binob{fill:var(--ink)}
+.binol{fill:var(--g3)}
+.chev2{fill:none;stroke:var(--g1);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.cheek{fill:var(--g3)}
+.squint{fill:none;stroke:var(--ink);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+
+.skin{fill:var(--white);stroke:var(--ink);stroke-width:2.5}
+.hair{fill:var(--ink)}
+.cowlick{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.shirt{fill:var(--g1);stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round}
+.pants{fill:var(--white);stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round}
+.crease{fill:none;stroke:var(--g4);stroke-width:2;stroke-linecap:round}
+.shoe{fill:var(--ink)}
+.shoeshine{fill:var(--g2)}
+.belt{fill:var(--ink)}
+.button{fill:var(--paper)}
+.collar{fill:var(--paper);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.armo{fill:none;stroke:var(--ink);stroke-width:17;stroke-linecap:round}
+.armi{fill:none;stroke:var(--g1);stroke-width:12;stroke-linecap:round}
+.pie{fill:var(--ink)}
+.piecut{fill:var(--white)}
+.nose{fill:var(--ink)}
+.sweat{fill:var(--white);stroke:var(--ink);stroke-width:1.8}
+.tongue{fill:var(--g2)}
+.tool{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.toolhead{fill:var(--g3);stroke:var(--ink);stroke-width:2}
+.can{fill:var(--paper);stroke:var(--ink);stroke-width:2}
+.canband{fill:var(--g3)}
+.cancap{fill:var(--g1);stroke:var(--ink);stroke-width:2}
+
+.bagbody{fill:var(--g1);stroke:var(--ink);stroke-width:2.2;stroke-linejoin:round}
+.bagfin{fill:var(--g1);stroke:var(--ink);stroke-width:2.2;stroke-linejoin:round}
+.bagbelly{fill:var(--g3)}
+.bageye{fill:var(--white)}
+.teeth{fill:none;stroke:var(--white);stroke-width:1.6;stroke-linejoin:round}
+.zip{fill:none;stroke:var(--g3);stroke-width:1.5;stroke-dasharray:2 2}
+.bagmouth{fill:var(--ink);stroke:var(--g3);stroke-width:1.2}
+.pull{fill:var(--g3);stroke:var(--ink);stroke-width:1}
+.chain{fill:none;stroke:var(--g3);stroke-width:1.2}
+
+.sky{fill:var(--sky)}
+.cloud{fill:var(--white);stroke:var(--ink);stroke-width:2.2}
+.sun{fill:var(--white);stroke:var(--ink);stroke-width:2.5}
+.ray{fill:none;stroke:var(--g2);stroke-width:4;stroke-linecap:round}
+.plank{fill:var(--plank);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.woodline{fill:none;stroke:var(--g4);stroke-width:1.4;stroke-linecap:round}
+.grass{fill:var(--g3)}
+.tuft{fill:none;stroke:var(--g1);stroke-width:2;stroke-linecap:round}
+.hedgeo{fill:var(--ink)}
+.hedgei{fill:var(--g2)}
+.leaf{fill:none;stroke:var(--g1);stroke-width:2;stroke-linecap:round}
+.dark{fill:var(--g1);stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round}
+.leg{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.grate{fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.patty{fill:var(--g1);stroke:var(--ink);stroke-width:1.5}
+.smoke{fill:none;stroke:var(--white);stroke-width:5;stroke-linecap:round}
+.dress{fill:var(--g3);stroke:var(--ink);stroke-width:2.5}
+.stripes{fill:var(--g4);stroke:var(--ink);stroke-width:2.5}
+.stripe{fill:none;stroke:var(--g2);stroke-width:3}
+.hatbrim{fill:var(--g1);stroke:var(--ink);stroke-width:2}
+.flower{fill:var(--white);stroke:var(--ink);stroke-width:1.6}
+.cloth{stroke:var(--ink);stroke-width:2.5}
+.check-a{fill:var(--white)}
+.check-b{fill:var(--g3)}
+.plate{fill:var(--white);stroke:var(--ink);stroke-width:1.8}
+.door{fill:var(--ink)}
+.web{fill:none;stroke:var(--g3);stroke-width:1}
+.sign{fill:var(--white);stroke:var(--ink);stroke-width:1.8}
+.signtext{fill:var(--ink);font-family:var(--font-file);font-size:10px;letter-spacing:.08em}
+.tumble{fill:none;stroke:var(--g1);stroke-width:2.2;stroke-linecap:round}
+.spark{fill:var(--white);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.mist{fill:var(--white);stroke:var(--g3);stroke-width:1.5}
+.dust{fill:var(--g4);stroke:var(--ink);stroke-width:2}
+.speed{fill:none;stroke:var(--ink);stroke-width:2.5;stroke-linecap:round}
+.flagpole{fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.flagcloth{fill:var(--white);stroke:var(--ink);stroke-width:1.8;stroke-linejoin:round}
+.under{fill:var(--white);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.wipes{fill:var(--g4);stroke:var(--ink);stroke-width:2}
+.wipestext{fill:var(--ink);font-family:var(--font-file);font-size:8px;letter-spacing:.06em}
+.balloon{fill:var(--white);stroke:var(--ink);stroke-width:2.2;stroke-linejoin:round}
+.balloontext{fill:var(--ink);font-family:var(--font-file);font-size:14px;letter-spacing:.04em}
+.zzz{fill:var(--ink);font-family:var(--font-display)}
+
+.cardbg{fill:var(--black)}
+.cardframe{fill:none;stroke:var(--paper);stroke-width:2}
+.cardframe2{fill:none;stroke:var(--paper);stroke-width:1;opacity:.6}
+.orn{fill:var(--paper)}
+.cardsmall{fill:var(--g4);font-family:var(--font-file);font-size:15px;letter-spacing:.24em}
+.titlebig{fill:var(--paper);font-family:var(--font-display);font-size:62px;letter-spacing:.04em}
+.titlein{fill:var(--g4);font-family:var(--font-title);font-style:italic;font-size:30px}
+.titlemid{fill:var(--paper);font-family:var(--font-display);font-size:50px;letter-spacing:.06em}
+.intertext{fill:var(--paper);font-family:var(--font-title);font-size:44px}
+.interattr{fill:var(--g3);font-family:var(--font-file);font-size:16px;letter-spacing:.24em}
+.raysbg{fill:none;stroke:var(--g1);stroke-width:2;opacity:.45}
+.leaderbg{fill:var(--g3)}
+.wedge{fill:var(--g4)}
+.lring{fill:none;stroke:var(--ink);stroke-width:4}
+.lcross{fill:none;stroke:var(--ink);stroke-width:2.5}
+.leadernum{fill:var(--ink);font-family:var(--font-display);font-size:250px}
+.tootbg{fill:var(--g4)}
+.tootray{fill:var(--g3)}
+.burst{fill:var(--white);stroke:var(--ink);stroke-width:7;stroke-linejoin:round}
+.tootword{fill:var(--ink);font-family:var(--font-display);font-size:116px;letter-spacing:.02em}
+.spot{fill:var(--g4)}
+.endline{fill:var(--g4);font-family:var(--font-title);font-style:italic;font-size:38px}
+.endbig{fill:var(--paper);font-family:var(--font-display);font-size:50px;letter-spacing:.03em}
+.brand{fill:var(--paper);font-family:var(--font-display);font-size:30px;letter-spacing:.3em}
+.theend{fill:var(--g4);font-family:var(--font-title);font-style:italic;font-size:26px}
+
+@media (max-width:520px){
+  body{font-size:16px}
+  .controls button{padding:8px 10px;font-size:12px}
+  .bigplay{padding:7px 14px 7px 10px;gap:8px;font-size:12px;bottom:4%}
+  .bigplay svg{width:18px;height:18px}
+  .bigplay .long{display:none}
+}
+</style>
+
+</head>
+<body>
+<main class="house">
+  <a class="back" href="./">&larr; Back to Shart Bag</a>
+  <header class="marquee">
+    <p class="eyebrow">Shart Force Films · Mission 1 of 4</p>
+    <h1>Operation White Pants</h1>
+    <p class="billing">Starring Pvt. Steven Sharts, Sgt. Skid Mark and Cpl. Toots McGee</p>
+  </header>
+
+  <div class="screen" id="screen" tabindex="0" aria-label="Film screen. Press space to play or pause.">
+    <svg id="stage" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Operation White Pants, a one minute black and white cartoon. A man in brand new white pants is grilling at a backyard cookout when the Shart Force attacks. Cpl. Toots McGee goes first and blames a dog that does not exist, then Pvt. Steven Sharts dives in. The man calmly opens his Shart Bag, sprays the squad into surrender, changes in a spin and is spotless again.">
+      <defs>
+        <pattern id="checks" width="24" height="24" patternUnits="userSpaceOnUse">
+          <rect width="24" height="24" class="check-a"/>
+          <rect width="12" height="12" class="check-b"/>
+          <rect x="12" y="12" width="12" height="12" class="check-b"/>
+        </pattern>
+        <mask id="irisMask" maskUnits="userSpaceOnUse" x="0" y="0" width="800" height="600">
+          <rect width="800" height="600" fill="#fff"/>
+          <circle id="irisHole" cx="400" cy="300" r="900" fill="#000"/>
+        </mask>
+      </defs>
+      <rect width="800" height="600" class="cardbg"/>
+      <g id="sceneWrap">
+        <g id="shake"><g id="world"></g></g>
+        <rect id="iris" width="800" height="600" class="cardbg" mask="url(#irisMask)"/>
+      </g>
+      <g id="cards"></g>
+    </svg>
+    <canvas id="film" aria-hidden="true"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <button class="bigplay" id="bigPlay" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><path d="M10 7.5 L17 12 L10 16.5 Z" fill="#efece4"/></svg>
+      <span id="bigPlayLabel">Play the short<span class="long"> · sound on</span></span>
+    </button>
+  </div>
+
+  <div class="controls" role="group" aria-label="Projector controls">
+    <button id="playBtn" type="button">Play</button>
+    <button id="replayBtn" type="button">From the top</button>
+    <div class="scrub">
+      <label class="time" for="scrub" id="timeLabel">0:00 / 1:00</label>
+      <input id="scrub" type="range" min="0" max="600" step="1" value="0" aria-label="Film position">
+    </div>
+    <button id="soundBtn" type="button" aria-pressed="true">Sound on</button>
+  </div>
+
+  <section class="paperwork">
+    <div class="sheet">
+      <h2>Mission log</h2>
+      <ol class="missions">
+        <li><span><span class="no">No. 1</span>White Pants</span><span class="status now">Now showing</span></li>
+        <li><span><span class="no">No. 2</span>First Date</span><span class="status">Not yet filmed</span></li>
+        <li><span><span class="no">No. 3</span>Job Interview</span><span class="status">Not yet filmed</span></li>
+        <li><span><span class="no">No. 4</span>Long Drive</span><span class="status">Not yet filmed</span></li>
+      </ol>
+      <p class="record">Unit record: 4 missions attempted, 0 completed. Always a surprise. Always a letdown.</p>
+    </div>
+    <div class="sheet">
+      <details>
+        <summary>Shot list</summary>
+        <ol class="shots">
+          <li><span class="tc">0:00</span>Leader countdown, then the title card.</li>
+          <li><span class="tc">0:07</span>Card: Saturday. A backyard cookout. Brand new white pants.</li>
+          <li><span class="tc">0:09</span>Iris in on the cookout. Burgers flip, the pants sparkle.</li>
+          <li><span class="tc">0:13</span>In the hedge, Skid Mark barks orders. Nobody follows them.</li>
+          <li><span class="tc">0:17</span>Toots sneaks up behind the man and lets one go. TOOT.</li>
+          <li><span class="tc">0:22</span>Everyone turns. Toots points at the dog. Card: "It was the dog."</li>
+          <li><span class="tc">0:26</span>Pan to an empty doghouse. Card: There is no dog.</li>
+          <li><span class="tc">0:31</span>Steven wakes, stretches, pulls his goggles down and winks.</li>
+          <li><span class="tc">0:34</span>Card: "Trust me. It's just a fart." Steven dives in.</li>
+          <li><span class="tc">0:39</span>The man freezes. The neighbors' jaws drop. Sad trombone.</li>
+          <li><span class="tc">0:43</span>Skid Mark salutes. Card: "Scrub all you want. I'm not going anywhere."</li>
+          <li><span class="tc">0:46</span>The man unzips his Shart Bag, sprays the squad into surrender and changes in a spin.</li>
+          <li><span class="tc">0:54</span>Iris out on the bag. End card: Steven will let you down. The Shart Bag won't.</li>
+        </ol>
+      </details>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+'use strict';
+const DURATION = 60;
+const POSTER_T = 4.8;
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, p) => a + (b - a) * p;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const io = (p) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2);
+const out = (p) => 1 - Math.pow(1 - p, 3);
+const back = (p) => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+const inR = (t, a, b) => t >= a && t < b;
+const show = (el, on) => { if (el) el.style.display = on ? '' : 'none'; };
+const f2 = (n) => (+n).toFixed(2);
+const tf = (el, x, y, sx = 1, sy = sx, r = 0) => el.setAttribute('transform', `translate(${f2(x)} ${f2(y)}) rotate(${f2(r)}) scale(${(+sx).toFixed(3)} ${(+sy).toFixed(3)})`);
+const op = (el, v) => el.setAttribute('opacity', clamp(v).toFixed(3));
+const reduced = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+
+/* ---------- music on/off: when the band stops, the whole cartoon freezes ---------- */
+const MUSIC = [[3, 20.35], [21.6, 26], [29, 38.55], [45.6, 53.6], [55.6, 60]];
+const musicOn = (t) => MUSIC.some(([a, b]) => t >= a && t < b);
+const musicTime = (t) => { let s = 0; for (const [a, b] of MUSIC) if (t > a) s += Math.min(t, b) - a; return s; };
+const beat = (m) => 0.5 - 0.5 * Math.cos(Math.PI * 4 * m); // 120 bpm bounce
+
+/* ---------- characters, drawn from the charm designs ---------- */
+function stevenSVG(p) {
+  return `<g id="${p}"><g transform="translate(0 -62)">
+    <circle cx="0" cy="-28" r="4" class="ring"/>
+    <ellipse class="poo" cx="0" cy="30" rx="33" ry="13"/>
+    <ellipse class="poo" cx="0" cy="14" rx="25" ry="12"/>
+    <ellipse class="poo" cx="0" cy="-2" rx="16" ry="10"/>
+    <path class="poo" d="M-6 -6 C-8 -16 0 -24 6 -24 C4 -18 8 -14 12 -8 Z"/>
+    <ellipse cx="-7" cy="-5" rx="5" ry="2.5" class="shine"/>
+    <g id="${p}-open"><ellipse class="eyew" cx="-7.5" cy="9" rx="4.5" ry="5"/><ellipse class="eyew" cx="7.5" cy="9" rx="4.5" ry="5"/><circle class="pupil" cx="-6.5" cy="9.5" r="2.3"/><circle class="pupil" cx="8.5" cy="9.5" r="2.3"/></g>
+    <g id="${p}-shut"><path class="lid" d="M-11 9 Q-7.5 12.5 -4 9 M4 9 Q7.5 12.5 11 9"/></g>
+    <g id="${p}-wink"><ellipse class="eyew" cx="-7.5" cy="9" rx="4.5" ry="5"/><circle class="pupil" cx="-6.5" cy="9.5" r="2.3"/><path class="lid" d="M3.5 9.5 Q7.5 5.5 11.5 9.5"/></g>
+    <path id="${p}-smile" class="mouth" d="M-8 19 Q0 26 8 19"/>
+    <ellipse id="${p}-o" class="mouthfill" cx="0" cy="21" rx="2.6" ry="2.2"/>
+    <g id="${p}-gog"><rect class="strap" x="-24" y="6" width="48" height="6" rx="3"/><rect class="gframe" x="-18" y="1" width="36" height="16" rx="7"/><rect class="lens" x="-15" y="3.5" width="30" height="11" rx="5"/><rect class="glint" x="-13" y="5" width="5" height="1.6" rx="0.8"/></g>
+    <path class="diaper" d="M-36 30 H36 C36 50 20 62 0 62 C-20 62 -36 50 -36 30 Z"/>
+    <path class="stitch" d="M-31 37 H31"/>
+    <rect class="tab" x="-41" y="27" width="12" height="11" rx="3"/>
+    <rect class="tab" x="29" y="27" width="12" height="11" rx="3"/>
+  </g></g>`;
+}
+function skidSVG(p) {
+  return `<g id="${p}"><g transform="translate(-100 -142)">
+    <path id="${p}-arm" class="sarm" d="M128 112 L122 128"/>
+    <path class="skbody" d="M14 128 C30 104 78 92 128 90 C150 89 176 92 186 104 C192 112 186 124 170 126 C130 130 86 130 50 138 C30 142 8 140 14 128 Z"/>
+    <path class="skl" d="M24 132 C40 124 58 119 76 117 M36 138 C52 134 66 131 80 129"/>
+    <path class="chev" d="M82 108 L92 102 L102 108 M82 115 L92 109 L102 115 M82 122 L92 116 L102 122"/>
+    <circle class="eyew" cx="150" cy="108" r="7"/><circle class="eyew" cx="170" cy="108" r="7"/>
+    <circle class="pupil" cx="151.5" cy="109.5" r="3.2"/><circle class="pupil" cx="171.5" cy="109.5" r="3.2"/>
+    <ellipse id="${p}-shout" class="mouthfill" cx="161" cy="121" rx="6" ry="4.2"/>
+    <path id="${p}-shut" class="mouth" d="M155 120.5 Q161 118.5 167 120.5"/>
+    <path class="hat" d="M143 92 C144 74 151 66 160 66 C169 66 176 74 177 92 Z"/>
+    <rect class="band" x="143.5" y="85" width="33" height="6"/>
+    <path class="pinch" d="M153 69 L156 82 M167 69 L164 82"/>
+    <ellipse class="hat" cx="160" cy="92" rx="34" ry="7"/>
+    <path class="brow" d="M141 99 L157 103 M179 99 L163 103"/>
+    <circle id="${p}-glove" class="glove" cx="122" cy="128" r="5.5"/>
+  </g></g>`;
+}
+function tootsSVG(p) {
+  return `<g id="${p}"><g transform="translate(-98 -155)">
+    <g id="${p}-stink"><path class="stink" d="M64 46 C58 38 70 32 64 24 M100 36 C94 28 106 22 100 14 M136 46 C130 38 142 32 136 24"/></g>
+    <g id="${p}-pointer"><g class="cloudo"><circle cx="170" cy="98" r="12"/><circle cx="188" cy="95" r="10"/><circle cx="204" cy="93" r="10"/><ellipse cx="219" cy="92" rx="10" ry="6"/></g>
+      <g class="cloudi"><circle cx="170" cy="98" r="9"/><circle cx="188" cy="95" r="7"/><circle cx="204" cy="93" r="7"/><ellipse cx="219" cy="92" rx="7.5" ry="3.5"/></g></g>
+    <g class="cloudo"><circle cx="62" cy="106" r="31"/><circle cx="96" cy="86" r="39"/><circle cx="134" cy="102" r="33"/><circle cx="100" cy="124" r="31"/></g>
+    <g class="cloudi"><circle cx="62" cy="106" r="28"/><circle cx="96" cy="86" r="36"/><circle cx="134" cy="102" r="30"/><circle cx="100" cy="124" r="28"/></g>
+    <g id="${p}-cheeks"><circle class="cheek" cx="68" cy="106" r="9"/><circle class="cheek" cx="128" cy="106" r="9"/></g>
+    <g id="${p}-bino"><rect x="92" y="80" width="12" height="10" rx="2" class="binob"/><circle cx="84" cy="86" r="12" class="binob"/><circle cx="112" cy="86" r="12" class="binob"/><circle cx="84" cy="86" r="7.5" class="binol"/><circle cx="112" cy="86" r="7.5" class="binol"/><circle cx="81" cy="83" r="2" class="glint"/><circle cx="109" cy="83" r="2" class="glint"/></g>
+    <g id="${p}-eyes"><ellipse class="eyew" cx="86" cy="88" rx="7" ry="8"/><ellipse class="eyew" cx="110" cy="88" rx="7" ry="8"/><circle id="${p}-pl" class="pupil" cx="88" cy="89" r="3.4"/><circle id="${p}-pr" class="pupil" cx="112" cy="89" r="3.4"/><path class="brow" d="M78 76 L92 79 M104 79 L118 76"/></g>
+    <g id="${p}-squeeze"><path class="squint" d="M78 82 L90 88 L78 94 M118 82 L106 88 L118 94"/></g>
+    <ellipse id="${p}-mouth" cx="98" cy="112" rx="5" ry="4.5" class="mouthfill"/>
+    <path id="${p}-smirk" class="mouth" d="M90 110 Q100 116 108 108"/>
+    <path class="chev2" d="M54 116 L64 110 L74 116 M54 123 L64 117 L74 123"/>
+  </g></g>`;
+}
+function bagSVG(p, withStrap) {
+  return `<g id="${p}">
+    ${withStrap ? '<path class="leg" d="M-70 -1 L-30 -1 M34 -1 L74 -1"/>' : ''}
+    <path class="bagfin" d="M-5 -14 L6 -30 L14 -13 Z"/>
+    <path class="bagbody" d="M-32 2 C-30 -12 -8 -17 14 -14 C22 -13 28 -10 32 -6 L44 -16 L41 2 L44 18 L32 8 C24 14 6 18 -10 16 C-24 14 -32 10 -32 2 Z"/>
+    <path class="bagbelly" d="M-29 7 C-20 13 2 15 24 9 C8 17 -22 17 -29 7 Z"/>
+    <circle class="bageye" cx="-19" cy="-3" r="2.9"/><circle class="pupil" cx="-19.6" cy="-3" r="1.3"/>
+    <path class="teeth" d="M-31 4 L-28 8 L-25 4 L-22 8 L-19 4 L-16 8"/>
+    <path class="zip" d="M-22 -7 C-8 -13 10 -13 27 -7"/>
+    <path id="${p}-open" class="bagmouth" d="M-22 -7 C-8 -16 10 -16 27 -7 C10 -2 -8 -2 -22 -7 Z"/>
+    <g id="${p}-pull" transform="translate(27 -7)"><rect class="pull" x="-2" y="-1" width="4" height="6" rx="1"/><path class="chain" d="M0 5 L0 9"/>
+      <g transform="translate(0 25) scale(0.17)">${stevenSVG(p + '-charm')}</g></g>
+  </g>`;
+}
+function guySVG() {
+  return `<g id="guy"><g id="guy-spin">
+    <g id="guy-legs">
+      <ellipse class="shoe" cx="-27" cy="-10" rx="27" ry="11"/><ellipse class="shoe" cx="27" cy="-10" rx="27" ry="11"/>
+      <ellipse class="shoeshine" cx="-36" cy="-15" rx="8" ry="3"/><ellipse class="shoeshine" cx="18" cy="-15" rx="8" ry="3"/>
+      <path class="pants" d="M-44 -124 L44 -124 L47 -18 L5 -18 L2 -92 L-2 -92 L-5 -18 L-47 -18 Z"/>
+      <path class="crease" d="M-25 -104 L-26 -26 M25 -104 L26 -26"/>
+    </g>
+    <rect class="belt" x="-46" y="-131" width="92" height="9" rx="2"/>
+    <path id="guy-armLo" class="armo"/><path id="guy-armL" class="armi"/>
+    <path id="guy-armRo" class="armo"/><path id="guy-armR" class="armi"/>
+    <rect class="skin" x="-9" y="-212" width="18" height="16"/>
+    <path class="shirt" d="M-46 -198 C-52 -170 -50 -146 -46 -128 L46 -128 C50 -146 52 -170 46 -198 C26 -209 -26 -209 -46 -198 Z"/>
+    <circle class="button" cx="0" cy="-178" r="3"/><circle class="button" cx="0" cy="-160" r="3"/><circle class="button" cx="0" cy="-142" r="3"/>
+    <path class="collar" d="M-18 -203 L0 -186 L18 -203 Z"/>
+    <g transform="translate(18 -124)">${bagSVG('bag', false)}</g>
+    <g id="guy-head">
+      <circle class="skin" cx="-41" cy="-236" r="10"/><circle class="skin" cx="41" cy="-236" r="10"/>
+      <circle class="skin" cx="0" cy="-238" r="40"/>
+      <g id="guy-hair"><path class="hair" d="M-34 -256 C-30 -288 30 -288 34 -256 C20 -268 -20 -268 -34 -256 Z"/><path class="cowlick" d="M0 -277 C2 -294 16 -296 18 -286"/></g>
+      <g id="ge-smile">
+        <ellipse class="pie" cx="-13" cy="-247" rx="6.5" ry="10"/><ellipse class="pie" cx="13" cy="-247" rx="6.5" ry="10"/>
+        <path class="piecut" d="M-15 -253 L-11 -257 L-10.5 -250 Z M11 -253 L15 -257 L15.5 -250 Z"/>
+        <path class="mouthfill" d="M-21 -218 Q0 -197 21 -218 Q0 -207 -21 -218 Z"/>
+      </g>
+      <g id="ge-worry">
+        <ellipse class="pie" cx="-8" cy="-246" rx="6" ry="9"/><ellipse class="pie" cx="17" cy="-246" rx="6" ry="9"/>
+        <path class="brow" d="M-22 -263 Q-14 -269 -6 -263 M6 -263 Q14 -269 24 -263"/>
+        <path class="mouth" d="M-16 -212 q4 -5 8 0 q4 5 8 0 q4 -5 8 0 q4 5 6 0"/>
+      </g>
+      <g id="ge-freeze">
+        <circle class="eyew" cx="-14" cy="-249" r="11"/><circle class="eyew" cx="14" cy="-249" r="11"/>
+        <circle class="pupil" cx="-14" cy="-249" r="2"/><circle class="pupil" cx="14" cy="-249" r="2"/>
+        <path class="brow" d="M-25 -266 L-5 -268 M5 -268 L25 -266"/>
+        <ellipse class="mouthfill" cx="0" cy="-209" rx="4" ry="5"/>
+      </g>
+      <g id="ge-calm">
+        <path class="pie" d="M-19.5 -246 A6.5 8 0 0 0 -6.5 -246 Z"/><path class="pie" d="M6.5 -246 A6.5 8 0 0 0 19.5 -246 Z"/>
+        <path class="lid" d="M-22 -246 L-4 -246 M4 -246 L22 -246"/>
+        <path class="brow" d="M-22 -258 L-6 -256 M6 -258 Q14 -264 22 -260"/>
+        <path class="mouth" d="M-12 -213 Q4 -205 18 -218"/>
+      </g>
+      <g id="ge-happy">
+        <path class="squint" d="M-21 -244 Q-13 -255 -5 -244 M5 -244 Q13 -255 21 -244"/>
+        <path class="mouthfill" d="M-22 -219 Q0 -189 22 -219 Z"/><ellipse class="tongue" cx="0" cy="-205" rx="8" ry="4"/>
+      </g>
+      <ellipse class="nose" cx="0" cy="-229" rx="7.5" ry="6"/>
+      <path id="guy-sweat" class="sweat" d="M38 -266 C42 -258 44 -254 40 -250 C36 -247 32 -252 34 -257 Z"/>
+    </g>
+    <g id="guy-gL">
+      <g id="guy-can"><rect class="can" x="-8" y="-30" width="16" height="30" rx="3"/><rect class="canband" x="-8" y="-20" width="16" height="8"/><rect class="cancap" x="-5" y="-38" width="10" height="8" rx="2"/><rect class="cancap" x="-10" y="-37" width="6" height="3" rx="1"/></g>
+      <circle class="glove" r="11"/>
+    </g>
+    <g id="guy-gR">
+      <g id="guy-spat"><path class="tool" d="M0 0 L26 -24"/><rect class="toolhead" x="24" y="-40" width="22" height="15" rx="2" transform="rotate(-42 35 -32)"/></g>
+      <g id="guy-thumb"><ellipse class="glove" cx="0" cy="-13" rx="4.5" ry="8"/></g>
+      <circle class="glove" r="11"/>
+    </g>
+  </g></g>`;
+}
+function spark(id) { return `<path id="${id}" class="spark" d="M0 -11 L2.6 -2.6 L11 0 L2.6 2.6 L0 11 L-2.6 2.6 L-11 0 L-2.6 -2.6 Z"/>`; }
+
+/* ---------- the backyard ---------- */
+function worldSVG() {
+  let fence = '';
+  for (let x = -578; x < 1110; x += 44) {
+    fence += `<path class="plank" d="M${x + 2} 402 L${x + 2} 266 L${x + 22} 246 L${x + 42} 266 L${x + 42} 402 Z"/>`;
+    fence += `<path class="woodline" d="M${x + 12} ${300 + Math.abs(x * 7) % 40} l0 22 M${x + 31} ${330 + Math.abs(x * 3) % 30} l0 18"/>`;
+  }
+  let tufts = '';
+  for (let x = -500; x < 1100; x += 57) { const y = 420 + Math.abs(x * 13) % 150; tufts += `<path class="tuft" d="M${x} ${y} l-4 -9 M${x + 5} ${y} l0 -11 M${x + 10} ${y} l4 -8"/>`; }
+  const bumps = [[-30, 502, 32], [10, 488, 31], [52, 482, 32], [96, 484, 31], [140, 482, 32], [184, 484, 31], [228, 490, 31], [268, 494, 30]];
+  const ho = bumps.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + 3}"/>`).join('');
+  const hi = bumps.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('');
+  let leaves = '';
+  [[-20, 514], [24, 500], [66, 498], [110, 502], [154, 498], [198, 504], [0, 548], [56, 538], [116, 550], [176, 556], [226, 540], [30, 580], [130, 584], [210, 580], [252, 512], [270, 560]].forEach(([x, y]) => { leaves += `<path class="leaf" d="M${x} ${y} q6 -6 12 0 M${x + 4} ${y + 10} q5 -5 10 0"/>`; });
+  const rays = Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return `<path class="ray" d="M${Math.cos(a) * 44} ${Math.sin(a) * 44} L${Math.cos(a) * 62} ${Math.sin(a) * 62}"/>`; }).join('');
+  const cloud = (id, x, y) => `<g id="${id}" transform="translate(${x} ${y})"><path class="cloud" d="M-50 10 C-62 10 -62 -8 -48 -8 C-48 -26 -24 -30 -14 -18 C-8 -34 20 -34 24 -16 C40 -24 56 -10 46 4 C58 8 54 22 40 20 L-44 20 C-56 20 -60 12 -50 10 Z"/></g>`;
+  let tumble = '';
+  for (let i = 0; i < 7; i++) { const a = i * 0.9; tumble += `<ellipse class="tumble" cx="0" cy="0" rx="${16 - i}" ry="${9 + (i % 3) * 3}" transform="rotate(${a * 57})"/>`; }
+
+  return `
+  <rect class="sky" x="-600" y="-50" width="1800" height="460"/>
+  <g id="sun" transform="translate(112 92)"><g id="sunRays">${rays}</g><circle class="sun" r="36"/>
+    <path class="lid" d="M-15 -6 Q-10 -11 -5 -6 M5 -6 Q10 -11 15 -6"/><path class="mouth" d="M-12 8 Q0 18 12 8"/></g>
+  ${cloud('cloud1', 330, 80)}${cloud('cloud2', 640, 54)}${cloud('cloud3', 960, 96)}
+  <g>${fence}</g>
+  <rect class="grass" x="-600" y="396" width="1800" height="260"/>
+  <path class="tuft" d="M-600 398 L1200 398" style="stroke-width:3"/>
+  <g>${tufts}</g>
+
+  <g id="doghouse" transform="translate(-1210 0)">
+    <rect class="plank" x="878" y="388" width="124" height="88"/>
+    <path class="woodline" d="M878 410 L1002 410 M878 432 L1002 432 M878 454 L1002 454"/>
+    <path class="dark" d="M864 396 L940 330 L1016 396 Z"/>
+    <path class="door" d="M914 476 L914 432 A26 26 0 0 1 966 432 L966 476 Z"/>
+    <path class="web" d="M915 434 L936 412 M915 446 L942 420 M915 460 L948 428 M920 428 Q924 440 915 444 M928 420 Q932 436 915 452"/>
+    <g transform="rotate(-8 960 400)"><path class="leg" d="M948 390 L952 398 M972 390 L968 398" style="stroke-width:1.5"/><rect class="sign" x="934" y="398" width="52" height="16" rx="2"/><text class="signtext" x="960" y="410" text-anchor="middle">VACANT</text></g>
+    <path class="plate" d="M1026 470 L1032 480 L1060 480 L1066 470 Z"/>
+  </g>
+  <g id="tumble">${tumble}</g>
+
+  <g id="grill" transform="translate(262 0)">
+    <path class="leg" d="M172 424 L150 474 M238 424 L260 474 M205 432 L205 476"/>
+    <path class="dark" d="M146 398 C146 432 176 446 205 446 C234 446 264 432 264 398 Z"/>
+    <path class="grate" d="M140 398 L270 398"/>
+    <ellipse class="patty" cx="176" cy="394" rx="13" ry="4.5"/><ellipse class="patty" cx="206" cy="394" rx="13" ry="4.5"/>
+    <ellipse id="patty" class="patty" rx="13" ry="4.5"/>
+    <g id="smoke"><path id="sm0" class="smoke" d="M176 380 c-8 -10 8 -16 0 -28"/><path id="sm1" class="smoke" d="M206 380 c-8 -10 8 -16 0 -28"/><path id="sm2" class="smoke" d="M236 380 c-8 -10 8 -16 0 -28"/></g>
+  </g>
+
+  <g id="guests">
+    <path class="dress" d="M560 434 C560 394 568 380 586 378 C604 380 612 394 612 434 Z"/>
+    <g id="lady-head">
+      <circle class="skin" cx="586" cy="352" r="22"/>
+      <g id="lady-face"><ellipse class="pie" cx="579" cy="350" rx="2.8" ry="4"/><ellipse class="pie" cx="593" cy="350" rx="2.8" ry="4"/>
+        <path class="lid" d="M574 344 l-3 -3 M598 344 l3 -3"/><ellipse id="lady-mouth" class="mouthfill" cx="586" cy="362" rx="4" ry="2"/></g>
+      <ellipse class="hatbrim" cx="586" cy="334" rx="34" ry="6"/><path class="hatbrim" d="M570 334 C570 316 602 316 602 334 Z"/>
+      <g id="lady-flower"><path class="lid" d="M598 324 L604 312"/><circle class="flower" cx="604" cy="310" r="6"/><circle class="pupil" cx="604" cy="310" r="2"/></g>
+    </g>
+    <path class="stripes" d="M660 434 C660 390 670 376 690 374 C710 376 720 390 720 434 Z"/>
+    <path class="stripe" d="M672 384 L672 434 M690 376 L690 434 M708 384 L708 434"/>
+    <g id="man-head">
+      <circle class="skin" cx="666" cy="348" r="7"/><circle class="skin" cx="714" cy="348" r="7"/>
+      <circle class="skin" cx="690" cy="346" r="25"/>
+      <path class="hair" d="M666 340 C666 330 672 326 676 328 L674 342 Z M714 340 C714 330 708 326 704 328 L706 342 Z"/>
+      <g id="man-face"><ellipse class="pie" cx="682" cy="341" rx="3" ry="4.2"/><ellipse class="pie" cx="698" cy="341" rx="3" ry="4.2"/>
+        <ellipse class="nose" cx="690" cy="350" rx="6" ry="4.8"/>
+        <ellipse id="man-mouth" class="mouthfill" cx="690" cy="363" rx="5" ry="2"/>
+        <path class="hair" d="M676 357 C682 352 688 354 690 356 C692 354 698 352 704 357 C698 360 692 358 690 358 C688 358 682 360 676 357 Z"/></g>
+    </g>
+    <path class="leg" d="M552 444 L540 474 M728 444 L740 474"/>
+    <rect class="cloth" x="526" y="398" width="228" height="44" fill="url(#checks)"/>
+    <path class="plate" d="M612 397 C612 392 668 392 668 397 Z"/>
+    <rect class="dark" x="716" y="370" width="12" height="28" rx="3"/><rect class="dark" x="719" y="362" width="6" height="9" rx="1"/>
+    <circle id="lady-gl" class="glove" cx="576" cy="396" r="7"/><circle id="lady-gr" class="glove" cx="598" cy="396" r="7"/>
+    <circle id="man-gl" class="glove" cx="678" cy="396" r="7.5"/><circle id="man-gr" class="glove" cx="702" cy="396" r="7.5"/>
+  </g>
+
+  <g id="squad">
+    ${skidSVG('skid')}
+    ${stevenSVG('steven')}
+    <g id="balloon">
+      <path class="balloon" d="M-96 -48 L96 -48 Q108 -48 108 -36 L108 -8 Q108 4 96 4 L18 4 L4 24 L2 4 L-96 4 Q-108 4 -108 -8 L-108 -36 Q-108 -48 -96 -48 Z"/>
+      <text id="b1" class="balloontext" x="0" y="-16" text-anchor="middle">SQUAD! ON MY MARK!</text>
+      <text id="b2" class="balloontext" x="0" y="-16" text-anchor="middle">...ANYONE?</text>
+    </g>
+    <text id="z0" class="zzz">Z</text><text id="z1" class="zzz">z</text><text id="z2" class="zzz">z</text>
+    ${spark('winkspark')}
+  </g>
+
+  ${guySVG()}
+  ${tootsSVG('toots')}
+
+  <g id="items">
+    <g id="item-under"><path class="under" d="M-18 -10 L18 -10 L16 6 C10 6 6 8 4 12 L-4 12 C-6 8 -10 6 -16 6 Z"/><path class="lid" d="M-18 -6 L18 -6"/></g>
+    <g id="item-wipes"><rect class="wipes" x="-20" y="-11" width="40" height="22" rx="4"/><text class="wipestext" x="0" y="3" text-anchor="middle">WIPES</text></g>
+    <g id="item-can"><rect class="can" x="-8" y="-30" width="16" height="30" rx="3"/><rect class="canband" x="-8" y="-20" width="16" height="8"/><rect class="cancap" x="-5" y="-38" width="10" height="8" rx="2"/></g>
+  </g>
+  <g id="mist">${[0, 1, 2, 3, 4, 5].map(i => `<circle id="mist${i}" class="mist" r="8"/>`).join('')}<circle id="mistBig" class="mist" r="40"/></g>
+  <g id="dust">${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<circle id="dust${i}" class="dust" r="14"/>`).join('')}
+    <path id="speed" class="speed" d="M-70 -200 L-50 -200 M-78 -150 L-54 -150 M-74 -100 L-52 -100 M50 -200 L70 -200 M54 -150 L78 -150 M52 -100 L74 -100"/></g>
+  <g id="sparks">${spark('sp0')}${spark('sp1')}${spark('sp2')}${spark('sp3')}${spark('sp4')}</g>
+
+  <g id="hedge"><g class="hedgeo">${ho}<rect x="-70" y="500" width="372" height="120"/></g><g class="hedgei">${hi}<rect x="-70" y="503" width="369" height="120"/></g>${leaves}</g>
+  <g id="flag"><path class="flagpole" d="M0 0 L0 -66"/><path id="flagcloth" class="flagcloth"/></g>
+  `;
+}
+
+/* ---------- cards ---------- */
+function frame(inset) {
+  const a = inset, b = inset + 9;
+  const orn = (x, y) => `<path class="orn" d="M${x} ${y - 7} L${x + 7} ${y} L${x} ${y + 7} L${x - 7} ${y} Z"/>`;
+  return `<rect class="cardframe" x="${a}" y="${a}" width="${800 - 2 * a}" height="${600 - 2 * a}" rx="4"/>
+    <rect class="cardframe2" x="${b}" y="${b}" width="${800 - 2 * b}" height="${600 - 2 * b}" rx="2"/>
+    ${orn(a, a)}${orn(800 - a, a)}${orn(a, 600 - a)}${orn(800 - a, 600 - a)}`;
+}
+function cardsSVG() {
+  const sunburst = Array.from({ length: 28 }, (_, i) => { const a = Math.PI + (i / 27) * Math.PI; return `<path d="M400 640 L${400 + Math.cos(a) * 900} ${640 + Math.sin(a) * 900}"/>`; }).join('');
+  const tootRays = Array.from({ length: 16 }, (_, i) => { const a0 = (i / 16) * Math.PI * 2, a1 = a0 + Math.PI / 16; return `<path class="tootray" d="M0 0 L${Math.cos(a0) * 700} ${Math.sin(a0) * 700} L${Math.cos(a1) * 700} ${Math.sin(a1) * 700} Z"/>`; }).join('');
+  let burst = '';
+  for (let i = 0; i < 32; i++) { const a = (i / 32) * Math.PI * 2 - Math.PI / 2; const r = i % 2 ? 190 : 262; burst += `${i ? 'L' : 'M'}${f2(Math.cos(a) * r * 1.2)} ${f2(Math.sin(a) * r * 0.86)} `; }
+  return `
+  <g id="leader">
+    <rect width="800" height="600" class="leaderbg"/>
+    <path id="leaderWedge" class="wedge"/>
+    <circle cx="400" cy="300" r="236" class="lring"/><circle cx="400" cy="300" r="196" class="lring"/>
+    <path class="lcross" d="M400 20 L400 580 M80 300 L720 300"/>
+    <text id="leaderNum" x="400" y="388" class="leadernum" text-anchor="middle">3</text>
+  </g>
+  <g id="titlecard">
+    <rect width="800" height="600" class="cardbg"/>
+    <g class="raysbg">${sunburst}</g>
+    ${frame(22)}
+    <text x="400" y="88" class="cardsmall" text-anchor="middle">SHART FORCE FILMS PRESENTS</text>
+    <text id="ttl1" x="400" y="176" class="titlebig" text-anchor="middle">THE SHART FORCE</text>
+    <text x="400" y="222" class="titlein" text-anchor="middle">in</text>
+    <text x="400" y="288" class="titlemid" text-anchor="middle">OPERATION</text>
+    <text x="400" y="346" class="titlemid" text-anchor="middle">WHITE PANTS</text>
+    <g id="lineup">
+      <g id="lu-skid-pos">${skidSVG('lu-skid')}</g>
+      <g id="lu-steven-pos">${stevenSVG('lu-steven')}</g>
+      <g id="lu-toots-pos">${tootsSVG('lu-toots')}</g>
+    </g>
+  </g>
+  <g id="inter">
+    <rect width="800" height="600" class="cardbg"/>
+    ${frame(30)}
+    <text id="il0" x="400" class="intertext" text-anchor="middle"></text>
+    <text id="il1" x="400" class="intertext" text-anchor="middle"></text>
+    <text id="il2" x="400" class="intertext" text-anchor="middle"></text>
+    <g id="iorn"><path class="cardframe2" d="M330 0 L390 0 M410 0 L470 0"/><path class="orn" d="M400 -6 L406 0 L400 6 L394 0 Z"/></g>
+    <text id="iattr" x="400" class="interattr" text-anchor="middle"></text>
+  </g>
+  <g id="tootcard">
+    <rect width="800" height="600" class="tootbg"/>
+    <g id="tootRays" transform="translate(400 300)">${tootRays}</g>
+    <g id="tootBurst" transform="translate(400 300)"><path class="burst" d="${burst}Z"/><text class="tootword" x="0" y="40" text-anchor="middle">TOOT!</text></g>
+  </g>
+  <g id="endcard">
+    <rect width="800" height="600" class="cardbg"/>
+    ${frame(22)}
+    <text id="end1" x="400" y="132" class="endline" text-anchor="middle">Steven will let you down.</text>
+    <text id="end2" x="400" y="198" class="endbig" text-anchor="middle">The Shart Bag won't.</text>
+    <circle id="endSpot" class="spot" cx="400" cy="336" r="112"/>
+    <g id="endBag" transform="translate(400 330) scale(3.4)">${bagSVG('ebag', false)}</g>
+    <text id="end3" x="412" y="490" class="brand" text-anchor="middle">SHART BAG</text>
+    <text id="end4" x="400" y="526" class="theend" text-anchor="middle">The End</text>
+  </g>`;
+}
+
+$('world').innerHTML = worldSVG();
+$('cards').innerHTML = cardsSVG();
+
+const E = {};
+['world', 'shake', 'sceneWrap', 'iris', 'irisHole', 'leader', 'leaderWedge', 'leaderNum', 'titlecard', 'lineup', 'inter', 'il0', 'il1', 'il2', 'iorn', 'iattr', 'tootcard', 'tootRays', 'tootBurst', 'endcard', 'end1', 'end2', 'end3', 'end4', 'endBag', 'endSpot',
+ 'sunRays', 'sun', 'cloud1', 'cloud2', 'cloud3', 'tumble', 'patty', 'sm0', 'sm1', 'sm2', 'lady-head', 'lady-face', 'lady-mouth', 'lady-flower', 'man-head', 'man-face', 'man-mouth', 'lady-gl', 'lady-gr', 'man-gl', 'man-gr',
+ 'skid', 'skid-arm', 'skid-glove', 'skid-shout', 'skid-shut', 'toots', 'toots-stink', 'toots-pointer', 'toots-cheeks', 'toots-bino', 'toots-eyes', 'toots-pl', 'toots-pr', 'toots-squeeze', 'toots-mouth', 'toots-smirk',
+ 'steven', 'steven-open', 'steven-shut', 'steven-wink', 'steven-smile', 'steven-o', 'steven-gog', 'balloon', 'b1', 'b2', 'z0', 'z1', 'z2', 'winkspark',
+ 'guy', 'guy-spin', 'guy-legs', 'guy-head', 'guy-hair', 'ge-smile', 'ge-worry', 'ge-freeze', 'ge-calm', 'ge-happy', 'guy-sweat', 'guy-armL', 'guy-armLo', 'guy-armR', 'guy-armRo', 'guy-gL', 'guy-gR', 'guy-spat', 'guy-can', 'guy-thumb', 'bag-open',
+ 'item-under', 'item-wipes', 'item-can', 'mistBig', 'dust', 'speed', 'flag', 'flagcloth'
+].forEach(id => { E[id] = $(id); });
+const MIST = [0, 1, 2, 3, 4, 5].map(i => $('mist' + i));
+const DUST = [0, 1, 2, 3, 4, 5, 6, 7].map(i => $('dust' + i));
+const SPARKS = [0, 1, 2, 3, 4].map(i => $('sp' + i));
+const EXPR = { smile: E['ge-smile'], worry: E['ge-worry'], freeze: E['ge-freeze'], calm: E['ge-calm'], happy: E['ge-happy'] };
+
+/* static poses for the title lineup, the bag charms and the end card */
+function stevenPose(p, { awake = true, gog = true } = {}) {
+  show($(p + '-open'), awake); show($(p + '-shut'), !awake); show($(p + '-wink'), false);
+  show($(p + '-smile'), awake); show($(p + '-o'), !awake);
+  $(p + '-gog').setAttribute('transform', gog ? '' : 'translate(0 -15)');
+}
+['bag-charm', 'ebag-charm', 'lu-steven'].forEach(p => stevenPose(p));
+show($('ebag-open'), false);
+show($('lu-skid-shout'), false);
+$('lu-skid-arm').setAttribute('d', 'M128 112 Q128 98 146 93'); $('lu-skid-glove').setAttribute('cx', 146); $('lu-skid-glove').setAttribute('cy', 93);
+['pointer', 'squeeze', 'eyes', 'smirk', 'cheeks'].forEach(k => show($('lu-toots-' + k), false));
+tf($('lu-skid-pos'), 222, 498, 1.1); tf($('lu-steven-pos'), 400, 498, 1.1); tf($('lu-toots-pos'), 582, 498, 0.82);
+
+/* ---------- timeline ---------- */
+const INTERS = [
+  { a: 6.5, b: 9.0, lines: ['Saturday.', 'A backyard cookout.', 'Brand new white pants.'] },
+  { a: 24.0, b: 26.0, lines: ['“It was the dog.”'], attr: 'CPL. TOOTS McGEE' },
+  { a: 29.0, b: 31.0, lines: ['There is no dog.'] },
+  { a: 34.0, b: 36.5, lines: ['“Trust me.', 'It’s just a fart.”'], attr: 'PVT. STEVEN SHARTS' },
+  { a: 42.6, b: 45.6, lines: ['“Scrub all you want.', 'I’m not going anywhere.”'], attr: 'SGT. SKID MARK' }
+];
+// camera keys: [time, centerX, centerY, zoom]; two keys at the same time make a hard cut
+const CAM = [
+  [9.0, 400, 300, 1], [13.0, 400, 300, 1], [13.6, 140, 415, 2.6], [17.0, 140, 415, 2.6], [17.7, 260, 400, 1.45], [20.4, 260, 400, 1.45],
+  [21.6, 400, 300, 1], [24.0, 400, 300, 1], [26.0, 400, 300, 1], [27.3, -120, 300, 1], [29.0, -120, 300, 1],
+  [31.0, 140, 415, 2.6], [34.0, 140, 415, 2.6],
+  [36.5, 330, 330, 1.15], [38.6, 330, 330, 1.15],
+  [38.6, 360, 322, 3.0], [40.6, 360, 322, 3.0],
+  [40.6, 400, 300, 1], [41.6, 400, 300, 1], [41.6, 140, 415, 2.6], [42.6, 140, 415, 2.6],
+  [45.6, 375, 390, 1.6], [46.6, 375, 390, 1.6], [47.2, 378, 418, 3.0], [48.6, 378, 418, 3.0], [49.3, 400, 300, 1], [60, 400, 300, 1]
+];
+function camAt(t) {
+  if (t <= CAM[0][0]) return CAM[0];
+  for (let i = 0; i < CAM.length - 1; i++) {
+    const a = CAM[i], b = CAM[i + 1];
+    if (t >= a[0] && t < b[0]) { const p = io((t - a[0]) / (b[0] - a[0])); return [t, lerp(a[1], b[1], p), lerp(a[2], b[2], p), lerp(a[3], b[3], p)]; }
+  }
+  return CAM[CAM.length - 1];
+}
+function hose(S, H, bend) {
+  const mx = (S[0] + H[0]) / 2, my = (S[1] + H[1]) / 2, dx = H[0] - S[0], dy = H[1] - S[1];
+  const len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+  return `M${f2(S[0])} ${f2(S[1])} Q${f2(mx + nx * bend)} ${f2(my + ny * bend)} ${f2(H[0])} ${f2(H[1])}`;
+}
+const bez = (a, b, c, p) => (1 - p) * (1 - p) * a + 2 * (1 - p) * p * b + p * p * c;
+
+/* ---------- render one frame of the film at time t ---------- */
+function render(t) {
+  const inter = INTERS.find(c => inR(t, c.a, c.b));
+  const leader = t < 3, title = inR(t, 3, 6.5), toot = inR(t, 20.4, 21.6), end = t >= 55.5;
+  const scene = !leader && !title && !inter && !toot && !end;
+  show(E.leader, leader); show(E.titlecard, title); show(E.inter, !!inter); show(E.tootcard, toot); show(E.endcard, end); show(E.sceneWrap, scene);
+  const mt = musicTime(t);
+  if (leader) {
+    const a = (t % 1) * 359.9, r = 300, end = (a - 90) * Math.PI / 180;
+    E.leaderWedge.setAttribute('d', `M400 300 L400 0 A${r} ${r} 0 ${a > 180 ? 1 : 0} 1 ${f2(400 + Math.cos(end) * r)} ${f2(300 + Math.sin(end) * r)} Z`);
+    E.leaderNum.textContent = String(3 - Math.floor(t));
+  }
+  if (title) {
+    const b = beat(mt);
+    op(E.titlecard, seg(t, 3, 3.25));
+    E.lineup.setAttribute('transform', `translate(0 ${f2(-4 * b)})`);
+  }
+  if (inter) {
+    const n = inter.lines.length, lh = 58, y0 = 300 - (n - 1) * lh / 2 + 14 - (inter.attr ? 18 : 0);
+    [E.il0, E.il1, E.il2].forEach((el, i) => { el.textContent = inter.lines[i] || ''; el.setAttribute('y', f2(y0 + i * lh)); });
+    const yo = y0 + (n - 1) * lh + 40;
+    E.iorn.setAttribute('transform', `translate(0 ${f2(yo)})`);
+    E.iattr.textContent = inter.attr || ''; E.iattr.setAttribute('y', f2(yo + 40));
+    op(E.inter, seg(t, inter.a, inter.a + 0.15));
+  }
+  if (toot) {
+    const p = seg(t, 20.4, 20.7);
+    E.tootBurst.setAttribute('transform', `translate(400 300) rotate(${f2(-6 + 4 * Math.sin(t * 30))}) scale(${f2(0.2 + 0.8 * back(p))})`);
+    E.tootRays.setAttribute('transform', `translate(400 300) rotate(${f2(t * 40)})`);
+  }
+  if (end) {
+    op(E.end1, seg(t, 55.6, 56.0)); op(E.end2, seg(t, 56.5, 56.9)); op(E.end3, seg(t, 57.4, 57.8)); op(E.end4, seg(t, 58.2, 58.7));
+    const pb = back(seg(t, 56.9, 57.4));
+    E.endBag.setAttribute('transform', `translate(400 ${f2(330 - 4 * beat(mt))}) scale(${f2(3.4 * Math.max(0.001, pb))})`);
+    E.endSpot.setAttribute('r', f2(112 * Math.max(0, out(seg(t, 56.8, 57.2)))));
+  }
+  if (scene) renderScene(t, mt);
+}
+
+function renderScene(t, mt) {
+  const bob = beat(mt);
+  /* camera */
+  const [, cx0, cy0, s] = camAt(t);
+  const hw = 400 / s, hh = 300 / s;
+  const cx = clamp(cx0, -520 + hw, 1100 - hw), cy = clamp(cy0, hh, 600 - hh);
+  E.world.setAttribute('transform', `translate(400 300) scale(${s.toFixed(4)}) translate(${f2(-cx)} ${f2(-cy)})`);
+  let sh = 0;
+  if (inR(t, 21.6, 22.3)) sh = 5 * (1 - seg(t, 21.6, 22.3));
+  if (inR(t, 38.6, 39.3)) sh = 7 * (1 - seg(t, 38.6, 39.3));
+  E.shake.setAttribute('transform', sh && !reduced ? `translate(${f2((Math.random() - 0.5) * sh * 2)} ${f2((Math.random() - 0.5) * sh * 2)})` : '');
+
+  /* iris */
+  let ir = 1000, icx = 400, icy = 300;
+  if (inR(t, 9.0, 9.9)) { ir = lerp(0, 620, io(seg(t, 9.0, 9.9))); icx = 360; icy = 400; }
+  if (t >= 53.5) { ir = lerp(620, 0, io(seg(t, 53.5, 55.1))); icx = 400 + (378 - cx) * s; icy = 300 + (421 - cy) * s; }
+  E.irisHole.setAttribute('r', f2(ir)); E.irisHole.setAttribute('cx', f2(icx)); E.irisHole.setAttribute('cy', f2(icy));
+
+  /* scenery */
+  E.sunRays.setAttribute('transform', `rotate(${f2(mt * 14)})`);
+  E.sun.setAttribute('transform', `translate(112 ${f2(92 - 3 * bob)})`);
+  E.cloud1.setAttribute('transform', `translate(${f2(330 + mt * 4)} 80)`);
+  E.cloud2.setAttribute('transform', `translate(${f2(640 - mt * 3)} 54)`);
+  E.cloud3.setAttribute('transform', `translate(${f2(960 + mt * 2)} 96)`);
+  [E.sm0, E.sm1, E.sm2].forEach((el, i) => { const ph = (mt * 0.7 + i / 3) % 1; el.setAttribute('transform', `translate(0 ${f2(-ph * 34)})`); op(el, Math.sin(Math.PI * ph) * 0.9); });
+  if (inR(t, 26.6, 29.0)) { const p = seg(t, 26.6, 29.0); tf(E.tumble, lerp(-560, -40, p), 456 - Math.abs(Math.sin(p * Math.PI * 4)) * 26, 1.6, 1.6, p * 720); show(E.tumble, true); } else show(E.tumble, false);
+
+  /* patty flips */
+  let pX = 238, pY = 394, pR = 0;
+  for (const f of [10.5, 12.0]) if (inR(t, f + 0.05, f + 0.8)) { const p = seg(t, f + 0.05, f + 0.8); pY = 394 - 74 * Math.sin(Math.PI * p); pR = 360 * p; pX = 238 + 6 * Math.sin(Math.PI * p); }
+  tf(E.patty, pX, pY, 1, 1, pR);
+
+  /* guests */
+  const lookGuy = t >= 21.7;
+  const ldx = lookGuy ? -7 : 4, mdx = lookGuy ? -7 : -4;
+  E['lady-face'].setAttribute('transform', `translate(${ldx} 0)`);
+  E['man-face'].setAttribute('transform', `translate(${mdx} 0)`);
+  E['lady-head'].setAttribute('transform', `translate(0 ${f2(-2.5 * beat(mt + 0.25))})`);
+  E['man-head'].setAttribute('transform', `translate(0 ${f2(-2.5 * bob)})`);
+  E['lady-flower'].setAttribute('transform', `rotate(${f2(8 * Math.sin(mt * Math.PI * 4))} 598 324)`);
+  let lry = 1.6, mry = 1.6, lrx = 4, mrx = 5;
+  if (t < 21.7) { lry = 1.5 + 2.2 * beat(mt + 0.25); mry = 1.5 + 2.2 * bob; }
+  if (t >= 40.6) { const p = out(seg(t, 40.6, 41.0)); lry = lerp(1.6, 8.5, p); mry = lerp(1.6, 9.5, p); lrx = 5; mrx = 6; }
+  if (t >= 52.4) { lry = 4.5; mry = 4.5; lrx = 6; mrx = 7; }
+  E['lady-mouth'].setAttribute('ry', f2(lry)); E['lady-mouth'].setAttribute('rx', f2(lrx));
+  E['man-mouth'].setAttribute('ry', f2(mry)); E['man-mouth'].setAttribute('rx', f2(mrx));
+  let clapL = 11, clapM = 12, clapY = 396;
+  if (t >= 52.4) { const c = Math.abs(Math.cos(Math.PI * 8 * (t - 52.4))); clapL = 2 + 9 * c; clapM = 2 + 10 * c; clapY = 378; }
+  E['lady-gl'].setAttribute('cx', f2(587 - clapL)); E['lady-gr'].setAttribute('cx', f2(587 + clapL));
+  E['man-gl'].setAttribute('cx', f2(690 - clapM)); E['man-gr'].setAttribute('cx', f2(690 + clapM));
+  [E['lady-gl'], E['lady-gr'], E['man-gl'], E['man-gr']].forEach(el => el.setAttribute('cy', f2(clapY)));
+
+  /* ----- Sgt. Skid Mark ----- */
+  const HIDE = 100, SQ = 0.9;
+  let skY = 460 + HIDE * (1 - (t >= 13.6 ? back(seg(t, 13.6, 13.95)) : 0));
+  if (t >= 50.3) skY = 460 + HIDE * io(seg(t, 50.3, 50.7));
+  tf(E.skid, 22, skY, SQ * (1 + 0.04 * bob), SQ * (1 - 0.05 * bob));
+  let skH = [122, 128], shout = false;
+  if (inR(t, 13.95, 15.6)) { skH = [96 + 4 * Math.sin(t * 16), 78 + 6 * Math.sin(t * 16)]; shout = Math.sin(t * 22) > -0.3; }
+  if (inR(t, 15.8, 17.0)) skH = [116, 112];
+  if (t >= 41.8) { const p = out(seg(t, 41.8, 42.05)); skH = [lerp(122, 146, p), lerp(128, 93, p)]; }
+  E['skid-arm'].setAttribute('d', `M128 112 Q${f2((128 + skH[0]) / 2 + 14)} ${f2((112 + skH[1]) / 2 - 4)} ${f2(skH[0])} ${f2(skH[1])}`);
+  E['skid-glove'].setAttribute('cx', f2(skH[0])); E['skid-glove'].setAttribute('cy', f2(skH[1]));
+  show(E['skid-shout'], shout); show(E['skid-shut'], !shout);
+  const b1 = inR(t, 13.95, 15.6), b2 = inR(t, 15.8, 17.0);
+  show(E.balloon, b1 || b2); show(E.b1, b1); show(E.b2, b2);
+  if (b1 || b2) { const p = back(seg(t, b1 ? 13.95 : 15.8, (b1 ? 13.95 : 15.8) + 0.2)); tf(E.balloon, 62, 372, 0.62 * Math.max(0.01, p)); }
+
+  /* ----- Cpl. Toots McGee ----- */
+  let ttX = 146, ttY = 472 + HIDE, ttS = SQ, ttR = 0, sqx = 1 + 0.04 * bob, sqy = 1 - 0.05 * bob, flip = 1;
+  if (t >= 14.2) ttY = 472 + HIDE * (1 - back(seg(t, 14.2, 14.5)));
+  let mode = 'bino';
+  if (inR(t, 14.5, 17.2)) ttR = 7 * Math.sin(t * 2.6);
+  if (inR(t, 17.2, 19.2)) { mode = 'sneak'; const p = seg(t, 17.2, 19.2); ttX = lerp(146, 270, p); ttY = lerp(472, 474, p) - Math.abs(Math.sin(Math.PI * 6 * p)) * 20; }
+  if (inR(t, 19.2, 24)) { ttX = 270; ttY = 474; }
+  if (inR(t, 19.2, 21.6)) { mode = 'squeeze'; const p = seg(t, 19.2, 20.4); ttS = SQ * (1 + 0.3 * io(p)); sqx = 1 + 0.035 * Math.sin(t * 46) * p; sqy = 1 - 0.035 * Math.sin(t * 46) * p; }
+  if (inR(t, 21.6, 24)) mode = 'smug';
+  if (inR(t, 22.25, 24)) flip = lerp(1, -1, io(seg(t, 22.25, 22.4)));
+  if (t >= 24 && t < 50.3) { ttX = 146; ttY = 472; }
+  if (t >= 50.3) { ttX = 146; ttY = 472 + HIDE * io(seg(t, 50.3, 50.7)); }
+  tf(E.toots, ttX, ttY, ttS * sqx * flip, ttS * sqy, ttR);
+  show(E['toots-bino'], mode === 'bino'); show(E['toots-eyes'], mode === 'sneak' || mode === 'smug'); show(E['toots-squeeze'], mode === 'squeeze');
+  show(E['toots-cheeks'], mode === 'squeeze'); show(E['toots-mouth'], mode !== 'smug'); show(E['toots-smirk'], mode === 'smug');
+  const lookR = mode === 'smug' ? 3 : 0;
+  E['toots-pl'].setAttribute('cx', 88 + lookR); E['toots-pr'].setAttribute('cx', 112 + lookR);
+  show(E['toots-stink'], mode === 'smug');
+  E['toots-stink'].setAttribute('transform', `translate(0 ${f2(-4 * Math.sin(t * 9))})`);
+  const pp = t >= 22.45 && t < 24 ? Math.max(0.001, back(seg(t, 22.45, 22.8))) : 0;
+  show(E['toots-pointer'], pp > 0);
+  E['toots-pointer'].setAttribute('transform', `translate(150 98) scale(${f2(pp)} 1) translate(-150 -98)`);
+
+  /* ----- Pvt. Steven Sharts ----- */
+  let svX = 250, svY = 470 + HIDE, svR = 0, svSX = SQ * (1 + 0.04 * bob), svSY = SQ * (1 - 0.05 * bob);
+  if (t >= 14.4) svY = 470 + HIDE * (1 - back(seg(t, 14.4, 14.7)));
+  const asleep = t < 31.6;
+  if (inR(t, 31.8, 32.6)) { const k = Math.sin(Math.PI * seg(t, 31.8, 32.6)); svSY = SQ * (1 + 0.3 * k); svSX = SQ * (1 - 0.16 * k); }
+  if (inR(t, 36.5, 36.8)) { const k = Math.sin(Math.PI * 0.5 * seg(t, 36.5, 36.8)); svSY = SQ * (1 - 0.28 * k); svSX = SQ * (1 + 0.16 * k); }
+  if (inR(t, 36.8, 38.6)) {
+    const p = seg(t, 36.8, 38.6), q = p * p * 0.35 + p * 0.65;
+    svX = bez(250, 312, 372, q); svY = bez(470, 190, 470, q); svR = lerp(-18, 172, io(p)); svSX = SQ * 0.92; svSY = SQ * 1.12;
+  }
+  show(E.steven, t < 38.6);
+  tf(E.steven, svX, svY, svSX, svSY, svR);
+  const wink = inR(t, 33.4, 34.0);
+  show(E['steven-shut'], asleep); show(E['steven-open'], !asleep && !wink); show(E['steven-wink'], wink);
+  show(E['steven-o'], asleep); show(E['steven-smile'], !asleep);
+  const gd = seg(t, 32.8, 33.0);
+  E['steven-gog'].setAttribute('transform', `translate(0 ${f2(-15 * (1 - gd))})`);
+  show(E.winkspark, wink);
+  if (wink) { const k = Math.sin(Math.PI * seg(t, 33.4, 34.0)); tf(E.winkspark, 265, 414, 0.9 * k, 0.9 * k, t * 200); }
+  const zOn = asleep && t >= 14.7;
+  [E.z0, E.z1, E.z2].forEach((el, i) => {
+    show(el, zOn); if (!zOn) return;
+    const ph = (mt * 0.55 + i / 3) % 1;
+    el.setAttribute('x', f2(258 + ph * 16)); el.setAttribute('y', f2(412 - ph * 40));
+    el.setAttribute('font-size', f2(9 + ph * 9)); op(el, Math.sin(Math.PI * ph));
+  });
+
+  /* ----- the man in the white pants ----- */
+  let gx = 360, gsy = 1 - 0.022 * bob, gsx = 1 + 0.012 * bob;
+  if (inR(t, 40.6, 42.6)) gx += Math.sin(t * 70) * 1.6;
+  tf(E.guy, gx, 545, gsx, gsy);
+  let spin = 1;
+  if (inR(t, 51.4, 52.2)) { spin = Math.cos(seg(t, 51.4, 52.2) * Math.PI * 6); if (Math.abs(spin) < 0.12) spin = spin < 0 ? -0.12 : 0.12; }
+  E['guy-spin'].setAttribute('transform', `scale(${spin.toFixed(3)} 1)`);
+  E['guy-head'].setAttribute('transform', `translate(0 ${f2(-3 * bob)})`);
+  const expr = t < 21.7 ? 'smile' : t < 38.6 ? 'worry' : t < 45.8 ? 'freeze' : t < 52.2 ? 'calm' : 'happy';
+  for (const k in EXPR) show(EXPR[k], k === expr);
+  E['guy-hair'].setAttribute('transform', expr === 'freeze' ? 'translate(0 -7)' : '');
+  const sweating = inR(t, 21.7, 38.6) || inR(t, 40.6, 45.6);
+  show(E['guy-sweat'], sweating);
+  if (sweating) { const ph = (t * 0.9) % 1; E['guy-sweat'].setAttribute('transform', `translate(0 ${f2(ph * 16)})`); op(E['guy-sweat'], 1 - ph * 0.7); }
+
+  // left arm (at his side, later the spray can)
+  let LH = [-60, -112], can = false;
+  if (inR(t, 48.6, 51.4)) { can = true; const p = io(seg(t, 48.8, 49.4)); LH = [lerp(-60, -128, p), lerp(-112, -176, p)]; }
+  if (t >= 51.4) LH = [-60, -132];
+  // right arm (spatula at the grill, then the bag, then thumbs up)
+  let RH = [104, -150], Rrot = 0, thumb = false;
+  const spat = t < 45.6;
+  for (const f of [10.5, 12.0]) if (inR(t, f, f + 0.6)) { const k = Math.sin(Math.PI * seg(t, f, f + 0.6)); RH = [104 - 6 * k, -150 - 34 * k]; Rrot = 28 * k; }
+  if (t >= 45.6) RH = [62, -112];
+  if (inR(t, 46.0, 46.7)) RH = [26, -126 - 7 * Math.abs(Math.sin(Math.PI * 3 * seg(t, 46.0, 46.7)))];
+  if (inR(t, 46.7, 47.3)) RH = [-2, -141];
+  if (inR(t, 47.3, 47.8)) RH = [lerp(-2, 46, seg(t, 47.3, 47.8)), -141];
+  if (inR(t, 47.8, 52.2)) { const p = seg(t, 47.8, 48.2); RH = [lerp(46, 62, p), lerp(-141, -112, p)]; }
+  if (t >= 52.2) { const p = out(seg(t, 52.2, 52.6)); RH = [lerp(62, 76, p), lerp(-112, -222, p)]; thumb = true; }
+  const SL = [-38, -190], SR = [38, -190];
+  const dL = hose(SL, LH, -16), dR = hose(SR, RH, 16);
+  E['guy-armL'].setAttribute('d', dL); E['guy-armLo'].setAttribute('d', dL);
+  E['guy-armR'].setAttribute('d', dR); E['guy-armRo'].setAttribute('d', dR);
+  tf(E['guy-gL'], LH[0], LH[1]); tf(E['guy-gR'], RH[0], RH[1], 1, 1, Rrot);
+  show(E['guy-spat'], spat); show(E['guy-can'], can); show(E['guy-thumb'], thumb);
+  show(E['bag-open'], inR(t, 47.8, 52.2));
+
+  /* bag items */
+  const bagW = [378, 421];
+  const showU = inR(t, 47.9, 51.8), showW = inR(t, 48.15, 51.8);
+  show(E['item-under'], showU); show(E['item-wipes'], showW);
+  const hover = Math.sin(t * 5) * 3;
+  if (showU) {
+    const p = out(seg(t, 47.9, 48.4)); let x = lerp(bagW[0], 290, p), y = lerp(bagW[1], 372, p) - 26 * Math.sin(Math.PI * p) + hover * p, sc = lerp(0.2, 1, p);
+    if (t >= 51.4) { const q = io(seg(t, 51.4, 51.8)); x = lerp(x, 360, q); y = lerp(y, 450, q); sc *= 1 - q; }
+    tf(E['item-under'], x, y, Math.max(0.001, sc), Math.max(0.001, sc), -8 + 6 * Math.sin(t * 3));
+  }
+  if (showW) {
+    const p = out(seg(t, 48.15, 48.65)); let x = lerp(bagW[0], 466, p), y = lerp(bagW[1], 368, p) - 26 * Math.sin(Math.PI * p) - hover * p, sc = lerp(0.2, 1, p);
+    if (t >= 51.4) { const q = io(seg(t, 51.4, 51.8)); x = lerp(x, 360, q); y = lerp(y, 450, q); sc *= 1 - q; }
+    tf(E['item-wipes'], x, y, Math.max(0.001, sc), Math.max(0.001, sc), 8 - 6 * Math.sin(t * 3));
+  }
+  const flyCan = inR(t, 48.3, 48.6);
+  show(E['item-can'], flyCan);
+  if (flyCan) { const p = seg(t, 48.3, 48.6); tf(E['item-can'], lerp(bagW[0], 300, p), lerp(bagW[1], 433, p) - 40 * Math.sin(Math.PI * p), lerp(0.4, 1, p), lerp(0.4, 1, p), 360 * p); }
+
+  /* spray mist */
+  const noz = [360 - 128 - 8, 545 - 176 - 36];
+  MIST.forEach((el, i) => {
+    const a = 49.5 + i * 0.1, p = seg(t, a, a + 0.6), on = t >= a && t < a + 0.6;
+    show(el, on); if (!on) return;
+    el.setAttribute('cx', f2(lerp(noz[0], 30 + i * 44, p))); el.setAttribute('cy', f2(lerp(noz[1], 436 - (i % 2) * 10, p) - 20 * Math.sin(Math.PI * p)));
+    el.setAttribute('r', f2(5 + 18 * p)); op(el, 0.95 - 0.3 * p);
+  });
+  const mb = inR(t, 50.0, 51.3);
+  show(E.mistBig, mb);
+  if (mb) { const p = seg(t, 50.0, 51.3); E.mistBig.setAttribute('cx', 132); E.mistBig.setAttribute('cy', f2(440 - 10 * p)); E.mistBig.setAttribute('r', f2(30 + 60 * out(Math.min(1, p * 2)))); op(E.mistBig, p < 0.5 ? 0.95 : 0.95 * (1 - (p - 0.5) * 2)); }
+
+  /* white flag */
+  const fl = t >= 50.7;
+  show(E.flag, fl);
+  if (fl) {
+    const fy = lerp(548, 476, back(seg(t, 50.7, 51.0)));
+    E.flag.setAttribute('transform', `translate(150 ${f2(fy)})`);
+    const w = Math.sin(t * 9) * 4, w2 = Math.sin(t * 9 + 1.6) * 4;
+    E.flagcloth.setAttribute('d', `M0 -64 C10 ${f2(-70 + w)} 20 ${f2(-58 + w2)} 32 ${f2(-64 + w)} L32 ${f2(-42 + w)} C20 ${f2(-36 + w2)} 10 ${f2(-48 + w)} 0 -42 Z`);
+  }
+
+  /* the spin change */
+  const sp = inR(t, 51.4, 52.3);
+  show(E.dust, sp);
+  if (sp) {
+    const p = seg(t, 51.4, 52.3);
+    DUST.forEach((el, i) => { const a = i / 8 * Math.PI * 2 + t * 9; el.setAttribute('cx', f2(360 + Math.cos(a) * (40 + 30 * p))); el.setAttribute('cy', f2(520 + Math.sin(a) * 14 - 8 * p)); el.setAttribute('r', f2(10 + 14 * Math.sin(Math.PI * p))); });
+    E.speed.setAttribute('transform', 'translate(360 545)'); op(E.speed, Math.sin(Math.PI * p));
+  }
+
+  /* sparkles on the pants */
+  const sparkWins = [[9.6, 10.9], [52.2, 53.5]];
+  const SP = [[338, 470], [384, 496], [352, 520], [398, 452], [326, 506]];
+  const sw = sparkWins.find(([a, b]) => inR(t, a, b));
+  SPARKS.forEach((el, i) => {
+    if (!sw) { show(el, false); return; }
+    const a = sw[0] + i * 0.14, k = Math.sin(Math.PI * seg(t, a, a + 0.55));
+    show(el, k > 0.01); tf(el, SP[i][0], SP[i][1], 0.9 * k, 0.9 * k, t * 160);
+  });
+}
+
+/* ---------- sound: everything is synthesized, nothing is downloaded ---------- */
+let AC = null, master = null, noiseBuf = null, whirGain = null, muted = false;
+function initAudio() {
+  const C = window.AudioContext || window.webkitAudioContext;
+  if (!C) return;
+  if (!AC) {
+    try { AC = new C(); } catch (e) { AC = null; return; }
+    master = AC.createGain(); master.gain.value = muted ? 0 : 0.75;
+    const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 170;
+    const lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 4300;
+    master.connect(hp); hp.connect(lp); lp.connect(AC.destination);
+    noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = AC.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+    const wl = AC.createBiquadFilter(); wl.type = 'lowpass'; wl.frequency.value = 520;
+    const am = AC.createGain(); am.gain.value = 0.5;
+    const lfo = AC.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 24; const lg = AC.createGain(); lg.gain.value = 0.4; lfo.connect(lg); lg.connect(am.gain);
+    whirGain = AC.createGain(); whirGain.gain.value = 0;
+    src.connect(wl); wl.connect(am); am.connect(whirGain); whirGain.connect(master);
+    src.start(); lfo.start();
+  }
+  if (AC.state === 'suspended') AC.resume();
+}
+const NOTE = (n) => { const m = /^([A-G])(#|b)?(\d)$/.exec(n); const st = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); return 440 * Math.pow(2, (12 * (+m[3] + 1) + st - 69) / 12); };
+function tone(f, at, dur, type = 'square', vol = 0.2, o = {}) {
+  if (!AC) return;
+  const t0 = AC.currentTime + Math.max(0, at);
+  const osc = AC.createOscillator(); osc.type = type; osc.frequency.setValueAtTime(f, t0);
+  if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t0 + dur);
+  const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + (o.atk || 0.008)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  let node = osc;
+  if (o.lp) { const fl = AC.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = o.lp; fl.Q.value = o.q || 0.8; osc.connect(fl); node = fl; }
+  if (o.vib) { const l = AC.createOscillator(); l.frequency.value = o.vib[0]; const lg = AC.createGain(); lg.gain.value = o.vib[1]; l.connect(lg); lg.connect(osc.frequency); l.start(t0); l.stop(t0 + dur + 0.05); }
+  node.connect(g); g.connect(master); osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+function noise(at, dur, vol, type = 'bandpass', f = 1000, to = null, q = 1) {
+  if (!AC) return;
+  const t0 = AC.currentTime + Math.max(0, at);
+  const s = AC.createBufferSource(); s.buffer = noiseBuf;
+  const fl = AC.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f, t0); if (to) fl.frequency.exponentialRampToValueAtTime(to, t0 + dur); fl.Q.value = q;
+  const g = AC.createGain(); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  s.connect(fl); fl.connect(g); g.connect(master); s.start(t0, Math.random() * 1.5); s.stop(t0 + dur + 0.02);
+}
+const SFX = {
+  beep: () => tone(1000, 0, 0.14, 'sine', 0.22),
+  boing: () => tone(230, 0, 0.4, 'sine', 0.32, { to: 560, vib: [16, 40] }),
+  pop: () => tone(480, 0, 0.09, 'sine', 0.32, { to: 960 }),
+  ding: () => { tone(1568, 0, 0.6, 'triangle', 0.2); tone(2349, 0.06, 0.5, 'triangle', 0.12); },
+  tiptoe: () => tone(880 + Math.random() * 120, 0, 0.07, 'triangle', 0.16),
+  creak: () => tone(150, 0, 0.9, 'sawtooth', 0.05, { to: 420, lp: 900 }),
+  toot: () => {
+    if (!AC) return; const t0 = AC.currentTime;
+    const o = AC.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(118, t0); o.frequency.linearRampToValueAtTime(76, t0 + 0.95);
+    const l = AC.createOscillator(); l.type = 'square'; l.frequency.value = 31; const lg = AC.createGain(); lg.gain.value = 26; l.connect(lg); lg.connect(o.frequency);
+    const fl = AC.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 900; fl.Q.value = 4;
+    const g = AC.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.55, t0 + 0.03); g.gain.setValueAtTime(0.5, t0 + 0.72); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.0);
+    o.connect(fl); fl.connect(g); g.connect(master); o.start(t0); l.start(t0); o.stop(t0 + 1.05); l.stop(t0 + 1.05);
+    noise(0, 0.5, 0.22, 'bandpass', 220, null, 2);
+  },
+  snap: () => { noise(0, 0.05, 0.35, 'highpass', 2200); tone(190, 0, 0.08, 'square', 0.12, { to: 95 }); },
+  cricket: () => { for (let k = 0; k < 2; k++) for (let j = 0; j < 4; j++) tone(4300, k * 0.42 + j * 0.055, 0.035, 'sine', 0.07); },
+  stretch: () => tone(200, 0, 0.7, 'sawtooth', 0.05, { to: 520, lp: 1200 }),
+  slideUp: () => tone(320, 0, 0.35, 'sine', 0.2, { to: 1300 }),
+  slideDown: () => tone(1500, 0, 1.5, 'sine', 0.18, { to: 240 }),
+  splat: () => { noise(0, 0.4, 0.7, 'lowpass', 2400, 160); tone(95, 0, 0.32, 'sine', 0.55, { to: 38 }); },
+  gulp: () => { tone(320, 0, 0.14, 'sine', 0.28, { to: 120 }); tone(480, 0.16, 0.1, 'sine', 0.22, { to: 240 }); },
+  trombone: () => { [['D4', 0, 0.42], ['C#4', 0.44, 0.42], ['C4', 0.88, 0.42], ['B3', 1.32, 1.1]].forEach(([n, a, d], i) => tone(NOTE(n), a, d, 'sawtooth', 0.14, { lp: 900, atk: 0.05, vib: i === 3 ? [6, 7] : null })); },
+  thud: () => tone(120, 0, 0.16, 'sine', 0.4, { to: 55 }),
+  zipper: () => { for (let i = 0; i < 26; i++) noise(i * 0.019, 0.012, 0.28, 'bandpass', 3200 + i * 40, null, 3); },
+  spray: () => noise(0, 0.95, 0.24, 'highpass', 5200),
+  whoosh: () => noise(0, 0.85, 0.32, 'bandpass', 300, 3200, 1.5),
+  applause: () => { for (let i = 0; i < 90; i++) noise(Math.random() * 2.4, 0.03, 0.12 + Math.random() * 0.14, 'bandpass', 1400 + Math.random() * 1600, null, 1.2); },
+  tada: () => { [['C5', 0], ['E5', 0.1], ['G5', 0.2]].forEach(([n, a]) => tone(NOTE(n), a, 0.14, 'square', 0.08, { lp: 2600 })); ['C5', 'E5', 'G5', 'C6'].forEach(n => tone(NOTE(n), 0.32, 1.0, 'square', 0.06, { lp: 2600 })); }
+};
+const CUES = [
+  [0.02, 'beep'], [1.0, 'beep'], [2.0, 'beep'], [9.9, 'ding'], [10.5, 'pop'], [12.0, 'pop'],
+  [13.6, 'boing'], [14.2, 'pop'], [14.4, 'pop'],
+  [17.2, 'tiptoe'], [17.53, 'tiptoe'], [17.87, 'tiptoe'], [18.2, 'tiptoe'], [18.53, 'tiptoe'], [18.87, 'tiptoe'],
+  [19.25, 'creak'], [20.4, 'toot'], [21.7, 'snap'], [22.4, 'pop'],
+  [27.4, 'cricket'], [28.3, 'cricket'],
+  [31.6, 'pop'], [31.8, 'stretch'], [32.85, 'snap'], [33.45, 'ding'],
+  [36.8, 'slideUp'], [37.1, 'slideDown'], [38.6, 'splat'], [40.0, 'gulp'], [40.9, 'trombone'], [41.85, 'thud'],
+  [46.05, 'thud'], [46.28, 'thud'], [46.5, 'thud'], [47.3, 'zipper'], [47.9, 'pop'], [48.15, 'pop'], [48.35, 'pop'],
+  [49.5, 'spray'], [50.75, 'boing'], [51.4, 'whoosh'], [52.25, 'ding'], [52.4, 'applause'], [54.0, 'tada']
+];
+// an original oom-pah ditty, 8 bars of eighth notes at 120 bpm
+const MEL = [
+  'E5 G5 E5 C5 D5 E5 G5 -', 'A5 G5 E5 C5 D5 - C5 -', 'C#5 E5 A5 G5 E5 C#5 E5 -', 'G5 F5 E5 C#5 A4 - - -',
+  'D5 F#5 A5 C6 A5 F#5 D5 -', 'B4 D5 G5 F5 D5 B4 G4 -', 'C5 E5 G5 C6 G5 E5 D5 C5', 'D5 - B4 - G4 A4 B4 -'
+].map(b => b.split(' '));
+const BASS = [['C3', 'G2'], ['C3', 'G2'], ['A2', 'E2'], ['A2', 'E2'], ['D3', 'A2'], ['G2', 'D3'], ['C3', 'G2'], ['G2', 'D3']];
+const CHORD = [['E4', 'G4', 'C5'], ['E4', 'G4', 'C5'], ['C#4', 'E4', 'G4'], ['C#4', 'E4', 'G4'], ['F#4', 'A4', 'C5'], ['F4', 'G4', 'B4'], ['E4', 'G4', 'C5'], ['F4', 'G4', 'B4']];
+let lastStep = -1;
+function playStep(k, at) {
+  const bar = Math.floor(k / 8) % 8, pos = k % 8, n = MEL[bar][pos];
+  if (n !== '-') tone(NOTE(n), at, 0.21, 'square', 0.055, { lp: 2400 });
+  if (pos === 0 || pos === 4) tone(NOTE(BASS[bar][pos ? 1 : 0]), at, 0.32, 'triangle', 0.24);
+  if (pos === 2 || pos === 6) CHORD[bar].forEach(c => tone(NOTE(c), at, 0.11, 'square', 0.02, { lp: 1600 }));
+  noise(at, 0.035, pos % 2 ? 0.02 : 0.035, 'highpass', 6500);
+}
+function scheduleMusic(t) {
+  if (!AC || !musicOn(t)) return;
+  const range = MUSIC.find(([a, b]) => t >= a && t < b);
+  const mt = musicTime(t), ahead = 0.15;
+  let k = Math.max(lastStep + 1, Math.ceil(mt / 0.25 - 1e-6));
+  for (; k * 0.25 < mt + ahead; k++) {
+    const at = k * 0.25 - mt;
+    if (t + at >= range[1]) break;
+    playStep(k, at); lastStep = k;
+  }
+}
+function resetMusic(t) { lastStep = Math.ceil(musicTime(t) / 0.25) - 1; }
+function fireCues(a, b) { if (!AC) return; for (const [ct, name] of CUES) if (ct > a && ct <= b) SFX[name](); }
+
+/* ---------- film stock: grain, dust, scratches, flicker ---------- */
+const cv = $('film'), fx = cv.getContext('2d');
+const grain = document.createElement('canvas'); grain.width = grain.height = 256;
+(() => { const g = grain.getContext('2d'), img = g.createImageData(256, 256); for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 30; } g.putImageData(img, 0, 0); })();
+const grainPat = fx.createPattern(grain, 'repeat');
+function sizeCanvas() { const r = cv.getBoundingClientRect(), d = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.max(1, Math.round(r.width * d)); cv.height = Math.max(1, Math.round(r.height * d)); }
+function drawFilm(live) {
+  const w = cv.width, h = cv.height; fx.clearRect(0, 0, w, h);
+  const ox = Math.random() * 256 | 0, oy = Math.random() * 256 | 0;
+  fx.save(); fx.translate(-ox, -oy); fx.fillStyle = grainPat; fx.fillRect(0, 0, w + 256, h + 256); fx.restore();
+  if (!live || reduced) return;
+  fx.fillStyle = `rgba(0,0,0,${(0.02 + Math.random() * 0.06).toFixed(3)})`; fx.fillRect(0, 0, w, h);
+  if (Math.random() < 0.3) { const x = Math.random() * w; fx.strokeStyle = Math.random() < 0.5 ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.3)'; fx.lineWidth = 1 + Math.random(); fx.beginPath(); fx.moveTo(x, 0); fx.lineTo(x + (Math.random() - 0.5) * 8, h); fx.stroke(); }
+  const n = Math.random() < 0.45 ? 1 + (Math.random() * 3 | 0) : 0;
+  for (let i = 0; i < n; i++) { fx.fillStyle = Math.random() < 0.6 ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.5)'; fx.beginPath(); fx.ellipse(Math.random() * w, Math.random() * h, 1 + Math.random() * 3, 1 + Math.random() * 2, Math.random() * 3, 0, Math.PI * 2); fx.fill(); }
+}
+
+/* ---------- projector ---------- */
+const screen = $('screen'), svg = $('stage'), bigPlay = $('bigPlay'), bigLabel = $('bigPlayLabel'), playBtn = $('playBtn'), soundBtn = $('soundBtn'), scrub = $('scrub'), timeLabel = $('timeLabel');
+let t = 0, playing = false, started = false, ended = false, lastNow = 0, dirty = true;
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+function syncUI() {
+  playBtn.textContent = playing ? 'Pause' : 'Play';
+  scrub.value = String(Math.round(t * 10));
+  timeLabel.textContent = `${fmt(t)} / ${fmt(DURATION)}`;
+  bigPlay.hidden = started && !ended;
+  const lbl = ended ? 'again' : 'play';
+  if (bigLabel.dataset.s !== lbl) { bigLabel.dataset.s = lbl; bigLabel.innerHTML = ended ? 'Watch again' : 'Play the short<span class="long"> · sound on</span>'; }
+  if (whirGain) whirGain.gain.setTargetAtTime(playing ? 0.05 : 0, AC.currentTime, 0.05);
+}
+function play() {
+  initAudio();
+  if (ended || t >= DURATION) { t = 0; ended = false; }
+  started = true; playing = true; resetMusic(t); lastNow = performance.now(); dirty = true; syncUI();
+}
+function pause() { playing = false; dirty = true; svg.style.transform = ''; syncUI(); }
+function toggle() { playing ? pause() : play(); }
+bigPlay.addEventListener('click', (e) => { e.stopPropagation(); play(); });
+screen.addEventListener('click', () => toggle());
+screen.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
+playBtn.addEventListener('click', toggle);
+$('replayBtn').addEventListener('click', () => { t = 0; ended = false; play(); });
+soundBtn.addEventListener('click', () => {
+  muted = !muted; soundBtn.textContent = muted ? 'Sound off' : 'Sound on'; soundBtn.setAttribute('aria-pressed', String(!muted));
+  if (master) master.gain.setTargetAtTime(muted ? 0 : 0.75, AC.currentTime, 0.03);
+});
+scrub.addEventListener('input', () => { t = clamp(+scrub.value / 10, 0, DURATION); started = true; ended = t >= DURATION; resetMusic(t); dirty = true; syncUI(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden && playing) pause(); });
+try { new ResizeObserver(() => { sizeCanvas(); dirty = true; }).observe(cv); } catch (e) { window.addEventListener('resize', () => { sizeCanvas(); dirty = true; }); }
+sizeCanvas();
+
+function loop(now) {
+  const dt = Math.min(0.1, Math.max(0, (now - lastNow) / 1000)); lastNow = now;
+  if (playing) {
+    const nt = Math.min(DURATION, t + dt);
+    fireCues(t, nt); t = nt; scheduleMusic(t);
+    if (AC && Math.random() < 0.07) noise(0, 0.006, 0.1 + Math.random() * 0.2, 'highpass', 2000);
+    if (t >= DURATION) { playing = false; ended = true; }
+    syncUI();
+    if (!reduced) svg.style.transform = `translate(${f2((Math.random() - 0.5) * 1.1)}px, ${f2((Math.random() - 0.5) * 1.1)}px)`;
+  }
+  if (playing || dirty) { render(started ? t : POSTER_T); drawFilm(playing); dirty = false; }
+  requestAnimationFrame(loop);
+}
+window.__filmSeek = (s) => { t = s; started = true; ended = false; render(t); drawFilm(false); syncUI(); };
+render(POSTER_T); drawFilm(false); syncUI();
+requestAnimationFrame((n) => { lastNow = n; loop(n); });
+})();
+</script>
+
+</body>
+</html>

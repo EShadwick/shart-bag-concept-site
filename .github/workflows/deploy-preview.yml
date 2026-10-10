@@ -1,0 +1,101 @@
+name: Deploy preview
+
+# Manual only. Builds the client preview in AWS and prints the link.
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write # GitHub OIDC -> AWS role, no stored AWS keys
+  contents: read
+
+concurrency:
+  group: preview-environment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: preview
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_preview_password: ${{ secrets.PREVIEW_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install API production dependencies (packaged into the Lambda zip)
+        working-directory: api
+        run: npm ci --omit=dev
+
+      - name: Check required settings
+        run: |
+          missing=0
+          for v in AWS_REGION TF_STATE_BUCKET AWS_DEPLOY_ROLE_ARN; do
+            if [ -z "${!v}" ]; then echo "::error::Variable $v is not set"; missing=1; fi
+          done
+          if [ -z "$TF_VAR_preview_password" ]; then echo "::error::Secret PREVIEW_PASSWORD is not set"; missing=1; fi
+          exit $missing
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: deploy-preview-${{ github.run_id }}
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.16.5"
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra/preview
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=preview/terraform.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="use_lockfile=true" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform apply
+        working-directory: infra/preview
+        run: terraform apply -auto-approve
+
+      - name: Read outputs
+        id: tf
+        working-directory: infra/preview
+        run: |
+          echo "url=$(terraform output -raw preview_url)" >> "$GITHUB_OUTPUT"
+          echo "bucket=$(terraform output -raw site_bucket)" >> "$GITHUB_OUTPUT"
+          echo "dist=$(terraform output -raw distribution_id)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload site files
+        run: aws s3 sync site/ "s3://${{ steps.tf.outputs.bucket }}/" --delete
+
+      - name: Refresh the CDN cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ steps.tf.outputs.dist }}" \
+            --paths "/*" > /dev/null
+
+      - name: Summary
+        run: |
+          {
+            echo "## Preview is up"
+            echo ""
+            echo "Link: ${{ steps.tf.outputs.url }}"
+            echo ""
+            echo "Username: \`client\`. Password: the PREVIEW_PASSWORD secret."
+            echo ""
+            echo "A brand-new CloudFront distribution can take a few minutes before the link answers."
+            echo "Run **Tear down preview** when the review is over."
+          } >> "$GITHUB_STEP_SUMMARY"

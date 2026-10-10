@@ -1,0 +1,93 @@
+# Runbook
+
+Everything needed to set up, run, share and remove the Shart Bag preview. Values in `<ANGLE_BRACKETS>` are placeholders.
+
+## 1. One-time setup
+
+### Tools on your machine
+
+- Git, Docker Desktop, Terraform 1.11 or newer, AWS CLI v2, GitHub CLI (`gh`).
+- AWS credentials with admin rights for the first step only (`aws configure` or `aws sso login`). Check with `aws sts get-caller-identity`.
+
+### Bootstrap AWS (once per AWS account)
+
+```bash
+cd infra/bootstrap
+cp terraform.tfvars.example terraform.tfvars   # set alert_email
+terraform init
+terraform apply
+terraform output
+```
+
+This creates the Terraform state bucket, the GitHub OIDC provider, the deploy role and a $5 monthly budget alert. If `apply` fails because the GitHub OIDC provider already exists, set `create_github_oidc_provider = false` in `terraform.tfvars` and apply again.
+
+Confirm the budget alert subscription from the AWS email when it arrives.
+
+The bootstrap state is a local file (`infra/bootstrap/terraform.tfstate`, git-ignored). Keep a copy somewhere safe; you need it to change or remove the bootstrap later.
+
+### Connect GitHub (once per repo)
+
+Use the bootstrap outputs:
+
+```bash
+gh api -X PUT repos/<OWNER>/<REPO>/environments/preview
+gh variable set AWS_REGION        --body "<AWS_REGION>"
+gh variable set TF_STATE_BUCKET   --body "<STATE_BUCKET>"
+gh variable set AWS_DEPLOY_ROLE_ARN --env preview --body "<DEPLOY_ROLE_ARN>"
+gh secret set PREVIEW_PASSWORD    --env preview          # prompts; 12+ characters
+```
+
+Or in the browser: **Settings → Environments → New environment → `preview`**, then add the variables and secret there and under **Settings → Secrets and variables → Actions**.
+
+Optional: on the `preview` environment, add yourself as a required reviewer so every deploy and teardown waits for your approval.
+
+## 2. Run locally
+
+```bash
+docker compose up --build    # http://localhost:8080
+docker compose down
+```
+
+Unit tests without Docker: `cd api && npm ci && npm test`.
+
+## 3. Start a review
+
+1. **Actions → Deploy preview → Run workflow.**
+2. Open the run summary for the link. A new CloudFront distribution can take a few minutes before it answers.
+3. Deploy checklist (things CI cannot test):
+   - Opening the link asks for a username and password; Cancel shows "Unauthorized".
+   - Username `client` plus the password shows the site; both video clips play.
+   - The film page opens and the back link returns to the site.
+   - Submitting the feedback form shows "Thanks. Your feedback was saved."
+4. Send reviewers the link, the username `client` and the password, ideally in separate messages.
+
+## 4. Read feedback
+
+**Actions → Export feedback → Run workflow**, then download the `client-feedback-<run id>` artifact (CSV, newest first).
+
+## 5. End a review
+
+**Actions → Tear down preview → Run workflow**, type `teardown`.
+
+The workflow exports feedback to a CSV artifact (kept 90 days), then deletes the site bucket and files, CloudFront distribution, password function, Lambda, logs and the feedback table. The link stops working. Deleting a CloudFront distribution takes several minutes; the run waits for it.
+
+## 6. Change the password
+
+Update the `PREVIEW_PASSWORD` secret on the `preview` environment, then run **Deploy preview** again. The old password stops working once CloudFront picks up the new function, usually within a few minutes.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Deploy fails at "Configure AWS credentials" with "Not authorized to perform sts:AssumeRoleWithWebIdentity" | Job not running in the `preview` environment, or owner/repo in `terraform.tfvars` differs from the real repo (case matters) | Check the environment name and re-apply bootstrap with the exact `github_owner` and `github_repo` |
+| Terraform `AccessDenied` on a resource | Resource name does not start with `shart-bag-preview-`, or a permission is missing from the deploy role | Keep the naming; add the missing action to `infra/bootstrap/main.tf` and re-apply bootstrap |
+| "Error acquiring the state lock" | A previous run was cancelled mid-apply | Confirm no other run is active, then `terraform force-unlock <LOCK_ID>` locally with the same backend config |
+| Link errors or times out right after deploy | CloudFront still propagating | Wait a few minutes and retry |
+| Password prompt keeps coming back | Wrong username or password | Username is `client`; check the secret value |
+| Feedback form says "Could not save feedback" | Lambda error | Check the function's CloudWatch log group `/aws/lambda/shart-bag-preview-feedback` |
+
+## Removing everything
+
+1. Run **Tear down preview**.
+2. Empty the state bucket, including old versions (S3 console → bucket → Empty).
+3. `cd infra/bootstrap && terraform destroy`.

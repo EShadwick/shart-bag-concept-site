@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  site:
+    name: Site asset check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: node scripts/check-site.mjs
+
+  terraform:
+    name: Terraform fmt and validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.16.5"
+      - run: terraform fmt -check -recursive infra
+      - name: Validate bootstrap
+        working-directory: infra/bootstrap
+        run: terraform init -backend=false -input=false && terraform validate
+      - name: Validate preview
+        working-directory: infra/preview
+        run: terraform init -backend=false -input=false && terraform validate
+
+  compose:
+    name: Docker Compose smoke test
+    runs-on: ubuntu-latest
+    needs: [api, site]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start the local stack
+        run: docker compose up -d --build --wait
+      - name: Site, film and video are served
+        run: |
+          curl -fsS -o /dev/null http://localhost:8080/
+          curl -fsS -o /dev/null http://localhost:8080/film.html
+          curl -fsS -o /dev/null http://localhost:8080/media/golf.mp4
+      - name: Feedback API saves a valid submission and rejects a bad one
+        run: |
+          curl -fsS http://localhost:8080/api/health
+          curl -fsS -X POST http://localhost:8080/api/feedback \
+            -H 'content-type: application/json' \
+            -d '{"name":"CI","comments":"Smoke test","favoriteBag":"midnight-black","favoriteCharm":"skid-mark","wouldBuy":"maybe"}' \
+            | grep -q '"saved"'
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8080/api/feedback \
+            -H 'content-type: application/json' -d '{"name":""}')
+          test "$code" = "400"
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs
+      - name: Stop
+        if: always()
+        run: docker compose down -v
