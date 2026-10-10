@@ -14,10 +14,13 @@ Everything needed to set up, run, share and remove the Shart Bag preview. Values
 ```bash
 cd infra/bootstrap
 cp terraform.tfvars.example terraform.tfvars   # set alert_email
+gh api repos/<OWNER>/<REPO> --jq '"\ngithub_owner_id = \"\(.owner.id)\"\ngithub_repo_id  = \"\(.id)\""' >> terraform.tfvars
 terraform init
 terraform apply
 terraform output
 ```
+
+The `gh api` line adds the repo's numeric owner and repo IDs. GitHub puts them in the OIDC subject for repositories created after 2026-07-15 (see ADR 0003); skip that line for an older repository.
 
 This creates the Terraform state bucket, the GitHub OIDC provider, the deploy role and a $5 monthly budget alert. If `apply` fails because the GitHub OIDC provider already exists, set `create_github_oidc_provider = false` in `terraform.tfvars` and apply again.
 
@@ -79,7 +82,7 @@ Update the `PREVIEW_PASSWORD` secret on the `preview` environment, then run **De
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Deploy fails at "Configure AWS credentials" with "Not authorized to perform sts:AssumeRoleWithWebIdentity" | Job not running in the `preview` environment, or owner/repo in `terraform.tfvars` differs from the real repo (case matters) | Check the environment name and re-apply bootstrap with the exact `github_owner` and `github_repo` |
+| Deploy fails at "Configure AWS credentials" with "Not authorized to perform sts:AssumeRoleWithWebIdentity" | The token's `sub` does not match the trust policy: missing or wrong `github_owner_id`/`github_repo_id`, job not in the `preview` environment, or owner/repo spelled differently (case matters) | Compare `terraform output github_oidc_subject` (in `infra/bootstrap`) with the `sub` from `aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=AssumeRoleWithWebIdentity --max-results 1`, fix `terraform.tfvars`, re-apply bootstrap |
 | Terraform `AccessDenied` on a resource | Resource name does not start with `shart-bag-preview-`, or a permission is missing from the deploy role | Keep the naming; add the missing action to `infra/bootstrap/main.tf` and re-apply bootstrap |
 | "Error acquiring the state lock" | A previous run was cancelled mid-apply | Confirm no other run is active, then `terraform force-unlock <LOCK_ID>` locally with the same backend config |
 | Link errors or times out right after deploy | CloudFront still propagating | Wait a few minutes and retry |

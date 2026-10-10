@@ -33,7 +33,9 @@ locals {
   partition  = data.aws_partition.current.partition
   prefix     = var.name_prefix
   repo_full  = "${var.github_owner}/${var.github_repo}"
-  state_bkt  = coalesce(var.state_bucket_name, "${local.prefix}-tfstate-${local.account_id}")
+  # OIDC subject prefix GitHub puts in this repo's tokens (see variables.tf).
+  github_subject = var.github_repo_id == null ? "repo:${local.repo_full}" : "repo:${var.github_owner}@${var.github_owner_id}/${var.github_repo}@${var.github_repo_id}"
+  state_bkt      = coalesce(var.state_bucket_name, "${local.prefix}-tfstate-${local.account_id}")
   tags = {
     Project   = "shart-bag-concept-site"
     ManagedBy = "terraform"
@@ -117,7 +119,7 @@ data "aws_iam_policy_document" "trust" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${local.repo_full}:environment:preview"]
+      values   = ["${local.github_subject}:environment:preview"]
     }
   }
 }

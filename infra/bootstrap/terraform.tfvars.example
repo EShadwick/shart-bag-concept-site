@@ -3,6 +3,11 @@ github_owner = "EShadwick"
 github_repo  = "shart-bag-concept-site"
 alert_email  = "<YOUR_EMAIL>"
 
+# Repos created after 2026-07-15 need these (GitHub's immutable OIDC subject). Get them with:
+#   gh api repos/<OWNER>/<REPO> --jq '.owner.id, .id'
+# github_owner_id = "<OWNER_ID>"
+# github_repo_id  = "<REPO_ID>"
+
 # Optional
 # aws_region                  = "us-east-1"
 # monthly_budget_usd          = "5"

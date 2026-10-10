@@ -12,3 +12,8 @@ output "aws_region" {
   description = "Set as the AWS_REGION repository variable."
   value       = var.aws_region
 }
+
+output "github_oidc_subject" {
+  description = "The only OIDC subject the deploy role trusts. Must match the sub claim GitHub sends."
+  value       = "${local.github_subject}:environment:preview"
+}
