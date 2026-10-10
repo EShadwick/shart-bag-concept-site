@@ -1,0 +1,186 @@
+name: "Server: create or update"
+
+# Manual only. The first run creates the EC2 server, its fixed address and the CloudFront
+# link (about 10 to 15 minutes). Later runs apply any infrastructure changes and put the
+# current commit live on the server. Starts the server if it was stopped.
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write # GitHub OIDC -> AWS role, no stored AWS keys
+  contents: read
+
+concurrency:
+  group: server-environment
+  cancel-in-progress: false
+
+env:
+  SERVER_NAME: shart-bag-server
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: preview
+    timeout-minutes: 45
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_preview_password: ${{ secrets.PREVIEW_PASSWORD }}
+      TF_VAR_repo_url: ${{ github.server_url }}/${{ github.repository }}.git
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check required settings
+        run: |
+          missing=0
+          for v in AWS_REGION TF_STATE_BUCKET AWS_DEPLOY_ROLE_ARN; do
+            if [ -z "${!v}" ]; then echo "::error::Variable $v is not set"; missing=1; fi
+          done
+          if [ -z "$TF_VAR_preview_password" ]; then echo "::error::Secret PREVIEW_PASSWORD is not set"; missing=1; fi
+          exit $missing
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+          AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: server-deploy-${{ github.run_id }}
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.16.5"
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra/server
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
+            -backend-config="key=server/terraform.tfstate" \
+            -backend-config="region=${{ vars.AWS_REGION }}" \
+            -backend-config="use_lockfile=true" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform apply
+        working-directory: infra/server
+        run: terraform apply -auto-approve
+
+      - name: Read outputs
+        id: tf
+        working-directory: infra/server
+        run: |
+          {
+            echo "url=$(terraform output -raw server_url)"
+            echo "id=$(terraform output -raw instance_id)"
+            echo "ip=$(terraform output -raw public_ip)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Make sure the server is running
+        env:
+          ID: ${{ steps.tf.outputs.id }}
+        run: |
+          state=$(aws ec2 describe-instances --instance-ids "$ID" --query 'Reservations[0].Instances[0].State.Name' --output text)
+          if [ "$state" = "stopping" ]; then aws ec2 wait instance-stopped --instance-ids "$ID"; state=stopped; fi
+          if [ "$state" = "stopped" ]; then aws ec2 start-instances --instance-ids "$ID" > /dev/null; fi
+          aws ec2 wait instance-running --instance-ids "$ID"
+
+      - name: Wait for Systems Manager to reach the server
+        env:
+          ID: ${{ steps.tf.outputs.id }}
+        run: |
+          for _ in $(seq 1 60); do
+            ping=$(aws ssm describe-instance-information --filters "Key=InstanceIds,Values=$ID" \
+              --query 'InstanceInformationList[0].PingStatus' --output text)
+            if [ "$ping" = "Online" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::The server did not check in with Systems Manager within 10 minutes"
+          exit 1
+
+      - name: Put this commit live
+        env:
+          ID: ${{ steps.tf.outputs.id }}
+        run: |
+          # Waits for first-boot setup if it is still running, clones the repo if first boot
+          # never got that far, checks out this commit, then runs the host setup and deploy
+          # scripts from that commit. The repo must be public: the server clones anonymously.
+          params=$(jq -nc --arg sha "$GITHUB_SHA" --arg repo "$TF_VAR_repo_url" '{
+            commands: [
+              "set -eu",
+              "export HOME=/root",
+              "cloud-init status --wait > /dev/null || true",
+              "command -v git > /dev/null || dnf install -y --quiet git",
+              ("test -d /opt/shart-bag/app/.git || git clone --quiet " + ($repo | @sh) + " /opt/shart-bag/app"),
+              "git -C /opt/shart-bag/app fetch --quiet origin",
+              ("git -C /opt/shart-bag/app -c advice.detachedHead=false checkout --quiet --force --detach " + $sha),
+              "bash /opt/shart-bag/app/deploy/server/setup-host.sh",
+              "bash /opt/shart-bag/app/deploy/server/deploy.sh"
+            ],
+            executionTimeout: ["1200"]
+          }')
+          cmd=$(aws ssm send-command --instance-ids "$ID" --document-name AWS-RunShellScript \
+            --comment "Deploy ${GITHUB_SHA::7}" --parameters "$params" \
+            --query Command.CommandId --output text)
+
+          status=Pending
+          for _ in $(seq 1 130); do
+            status=$(aws ssm get-command-invocation --command-id "$cmd" --instance-id "$ID" \
+              --query Status --output text 2>/dev/null || echo Pending)
+            case "$status" in Success|Failed|Cancelled|TimedOut) break ;; esac
+            sleep 10
+          done
+
+          aws ssm get-command-invocation --command-id "$cmd" --instance-id "$ID" \
+            --query StandardOutputContent --output text
+          if [ "$status" != "Success" ]; then
+            aws ssm get-command-invocation --command-id "$cmd" --instance-id "$ID" \
+              --query StandardErrorContent --output text
+            echo "::error::Deploy on the server ended with status: $status"
+            exit 1
+          fi
+
+      - name: Wait for the link to answer
+        env:
+          URL: ${{ steps.tf.outputs.url }}
+          PASS: ${{ secrets.PREVIEW_PASSWORD }}
+        run: |
+          # A brand-new CloudFront distribution can take several minutes to reach every edge.
+          for _ in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -u "client:$PASS" "$URL" || true)
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::$URL did not return 200 within 10 minutes (last status: $code)"
+          exit 1
+
+      - name: Security checks
+        env:
+          URL: ${{ steps.tf.outputs.url }}
+          IP: ${{ steps.tf.outputs.ip }}
+        run: |
+          # Without the password, CloudFront must refuse.
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$URL")
+          test "$code" = "401" || { echo "::error::Expected 401 without a password, got $code"; exit 1; }
+          # The server's own address must not answer anyone but CloudFront.
+          if curl -s -o /dev/null --max-time 8 "http://$IP/"; then
+            echo "::error::The server answered directly at $IP. It should only accept CloudFront."
+            exit 1
+          fi
+          echo "Password required, and the server is not reachable directly."
+
+      - name: Summary
+        run: |
+          {
+            echo "## Server is up"
+            echo ""
+            echo "Link: ${{ steps.tf.outputs.url }}"
+            echo ""
+            echo "Username: \`client\`. Password: the PREVIEW_PASSWORD secret."
+            echo ""
+            echo "The link stays the same across stops and starts. Run **Server: stop** when you are done;"
+            echo "it also stops by itself every night around 09:30 UTC."
+          } >> "$GITHUB_STEP_SUMMARY"

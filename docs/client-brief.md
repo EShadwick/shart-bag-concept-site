@@ -13,7 +13,7 @@ Shart Bag is a pre-launch novelty product: a shark-shaped fanny pack that carrie
 
 1. Present the product line, charms and kit in one place that looks like a real brand.
 2. Collect structured feedback: favorite bag, favorite charm, purchase intent and free-text comments.
-3. Keep the concept private to invited reviewers.
+3. Keep the review site private to invited reviewers. (The source repository is public as a portfolio piece; the password-protected link is what reviewers use.)
 4. Spend as close to nothing as possible when no review is running.
 
 ## In scope
@@ -21,6 +21,7 @@ Shart Bag is a pre-launch novelty product: a shark-shaped fanny pack that carrie
 - One-page concept site with the three bags, three charms, kit contents, field-test clips and the first short film.
 - Feedback form and storage.
 - A password-protected preview link that the client can turn on and off.
+- Change request (2026-10-10): a server option with a link that never changes, switched on and off from GitHub, at a small fixed monthly cost (see ADR 0005).
 - Export of feedback to a spreadsheet-friendly file.
 - Local development environment, CI and infrastructure as code.
 
@@ -42,6 +43,8 @@ Shart Bag is a pre-launch novelty product: a shark-shaped fanny pack that carrie
 | 5 | The preview can be created and fully removed without using the AWS console | Deploy and Tear down workflows |
 | 6 | No AWS access keys are stored in GitHub | Deploys use GitHub OIDC and a scoped IAM role |
 | 7 | Feedback survives teardown | Tear down exports a CSV artifact before deleting the table |
+| 8 | The server keeps the same link across stops and starts, and cannot be left running by mistake | Start and Stop workflows; nightly scheduled stop |
+| 9 | The server cannot be reached except through the password gate | Deploy workflow security checks: 401 without a password, no answer at the server's own IP; nginx origin-secret test in CI |
 
 ## Open items
 

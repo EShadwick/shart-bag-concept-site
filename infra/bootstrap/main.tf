@@ -1,11 +1,11 @@
 # One-time setup, run from your own machine with admin credentials.
 # Creates the things that must exist before GitHub Actions can deploy:
-#   1. an S3 bucket for Terraform state (the preview stack's memory)
+#   1. an S3 bucket for Terraform state (memory for the preview and server stacks)
 #   2. a GitHub OIDC trust so Actions can assume a role without stored AWS keys
 #   3. a deploy role scoped to this repo's "preview" environment
 #   4. a monthly budget that emails you before costs become a surprise
 #
-# This stack stays in place when the preview is torn down. It costs nothing to keep
+# This stack stays in place when the preview or server is deleted. It costs nothing to keep
 # except a few KB of state storage.
 
 terraform {
@@ -126,7 +126,7 @@ data "aws_iam_policy_document" "trust" {
 
 resource "aws_iam_role" "deployer" {
   name                 = "${local.prefix}-preview-deployer"
-  description          = "Assumed by GitHub Actions to deploy and tear down the Shart Bag concept preview"
+  description          = "Assumed by GitHub Actions to deploy, run and delete the Shart Bag preview and server"
   assume_role_policy   = data.aws_iam_policy_document.trust.json
   max_session_duration = 3600
 }
@@ -140,7 +140,7 @@ data "aws_iam_policy_document" "deployer" {
   statement {
     sid       = "TerraformStateObjects"
     actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-    resources = ["${aws_s3_bucket.state.arn}/preview/*"]
+    resources = ["${aws_s3_bucket.state.arn}/preview/*", "${aws_s3_bucket.state.arn}/server/*"]
   }
 
   statement {
@@ -150,9 +150,12 @@ data "aws_iam_policy_document" "deployer" {
   }
 
   statement {
-    sid       = "FeedbackTable"
-    actions   = ["dynamodb:*"]
-    resources = ["arn:${local.partition}:dynamodb:${var.aws_region}:${local.account_id}:table/${local.prefix}-preview-*"]
+    sid     = "FeedbackTables"
+    actions = ["dynamodb:*"]
+    resources = [
+      "arn:${local.partition}:dynamodb:${var.aws_region}:${local.account_id}:table/${local.prefix}-preview-*",
+      "arn:${local.partition}:dynamodb:${var.aws_region}:${local.account_id}:table/${local.prefix}-server-*",
+    ]
   }
 
   statement {
@@ -162,13 +165,16 @@ data "aws_iam_policy_document" "deployer" {
   }
 
   statement {
-    sid = "FunctionRole"
+    sid = "WorkloadRoles"
     actions = [
       "iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:UpdateRole", "iam:TagRole", "iam:UntagRole",
       "iam:UpdateAssumeRolePolicy", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies",
       "iam:PutRolePolicy", "iam:GetRolePolicy", "iam:DeleteRolePolicy", "iam:ListInstanceProfilesForRole",
     ]
-    resources = ["arn:${local.partition}:iam::${local.account_id}:role/${local.prefix}-preview-*"]
+    resources = [
+      "arn:${local.partition}:iam::${local.account_id}:role/${local.prefix}-preview-*",
+      "arn:${local.partition}:iam::${local.account_id}:role/${local.prefix}-server-*",
+    ]
   }
   statement {
     sid       = "PassFunctionRoleToLambda"
@@ -197,6 +203,113 @@ data "aws_iam_policy_document" "deployer" {
   statement {
     sid       = "CloudFront"
     actions   = ["cloudfront:*"]
+    resources = ["*"]
+  }
+
+  # ---------- Server option (infra/server, docs/adr/0005-ec2-server-option.md) ----------
+
+  # Most EC2 create calls cannot be scoped to resources that do not exist yet, so EC2 is
+  # allowed in this one region, and the guardrail below limits what it can launch.
+  statement {
+    sid       = "ServerEc2"
+    actions   = ["ec2:*"]
+    resources = ["*"]
+    condition {
+      test     = "StringEquals"
+      variable = "aws:RequestedRegion"
+      values   = [var.aws_region]
+    }
+  }
+  # Cost guardrail: the only instance sizes GitHub Actions can launch.
+  statement {
+    sid       = "OnlySmallInstances"
+    effect    = "Deny"
+    actions   = ["ec2:RunInstances"]
+    resources = ["arn:${local.partition}:ec2:*:*:instance/*"]
+    condition {
+      test     = "StringNotEquals"
+      variable = "ec2:InstanceType"
+      values   = ["t4g.micro", "t4g.small"]
+    }
+  }
+
+  # Cost guardrail: nothing that commits to long-term spend, dedicated hardware or a NAT gateway.
+  statement {
+    sid    = "NoCommitmentsOrExpensiveExtras"
+    effect = "Deny"
+    actions = [
+      "ec2:Purchase*", "ec2:AllocateHosts", "ec2:CreateCapacityReservation*",
+      "ec2:RequestSpotInstances", "ec2:RequestSpotFleet", "ec2:CreateFleet", "ec2:CreateNatGateway",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid = "ServerInstanceProfile"
+    actions = [
+      "iam:CreateInstanceProfile", "iam:DeleteInstanceProfile", "iam:GetInstanceProfile",
+      "iam:AddRoleToInstanceProfile", "iam:RemoveRoleFromInstanceProfile",
+      "iam:TagInstanceProfile", "iam:UntagInstanceProfile", "iam:ListInstanceProfileTags",
+    ]
+    resources = ["arn:${local.partition}:iam::${local.account_id}:instance-profile/${local.prefix}-server-*"]
+  }
+  # The server role may only ever get the AWS managed Systems Manager policy attached.
+  statement {
+    sid       = "ServerRoleSsmPolicy"
+    actions   = ["iam:AttachRolePolicy", "iam:DetachRolePolicy"]
+    resources = ["arn:${local.partition}:iam::${local.account_id}:role/${local.prefix}-server-*"]
+    condition {
+      test     = "ArnEquals"
+      variable = "iam:PolicyARN"
+      values   = ["arn:${local.partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"]
+    }
+  }
+  statement {
+    sid       = "PassServerRoleToEc2"
+    actions   = ["iam:PassRole"]
+    resources = ["arn:${local.partition}:iam::${local.account_id}:role/${local.prefix}-server-*"]
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PassedToService"
+      values   = ["ec2.amazonaws.com"]
+    }
+  }
+
+  statement {
+    sid = "ServerParameters"
+    actions = [
+      "ssm:PutParameter", "ssm:GetParameter", "ssm:GetParameters", "ssm:DeleteParameter",
+      "ssm:AddTagsToResource", "ssm:RemoveTagsFromResource", "ssm:ListTagsForResource",
+    ]
+    resources = ["arn:${local.partition}:ssm:${var.aws_region}:${local.account_id}:parameter/${local.prefix}/server/*"]
+  }
+  statement {
+    sid       = "AmazonLinuxImageLookup"
+    actions   = ["ssm:GetParameter", "ssm:GetParameters"]
+    resources = ["arn:${local.partition}:ssm:${var.aws_region}::parameter/aws/service/ami-amazon-linux-latest/*"]
+  }
+  # Run Command: only the stock shell document, and only on the server (by its Name tag).
+  statement {
+    sid       = "ServerDeployDocument"
+    actions   = ["ssm:SendCommand"]
+    resources = ["arn:${local.partition}:ssm:${var.aws_region}::document/AWS-RunShellScript"]
+  }
+  statement {
+    sid       = "ServerDeployTarget"
+    actions   = ["ssm:SendCommand"]
+    resources = ["arn:${local.partition}:ec2:${var.aws_region}:${local.account_id}:instance/*"]
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Name"
+      values   = ["${local.prefix}-server"]
+    }
+  }
+  statement {
+    sid = "ServerReadOnlySsm"
+    actions = [
+      "ssm:DescribeParameters", "ssm:GetCommandInvocation", "ssm:ListCommandInvocations",
+      "ssm:ListCommands", "ssm:DescribeInstanceInformation",
+    ]
     resources = ["*"]
   }
 }

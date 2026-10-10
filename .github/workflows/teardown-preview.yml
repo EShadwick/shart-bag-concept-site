@@ -56,7 +56,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: hashFiles('feedback.csv') != ''
         with:
-          name: client-feedback-${{ github.run_id }}
+          name: preview-feedback-${{ github.run_id }}
           path: feedback.csv
           retention-days: 90
 

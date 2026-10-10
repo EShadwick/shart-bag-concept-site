@@ -1,0 +1,44 @@
+# nginx on the EC2 server. The nginx image fills in the ORIGIN_SECRET value when the container starts.
+# Every request must carry the header CloudFront adds; anything else gets 403, so the only
+# way in is through CloudFront and its password gate.
+
+map $http_x_origin_verify $from_cloudfront {
+  default 0;
+  "${ORIGIN_SECRET}" 1;
+}
+
+server {
+  listen 80 default_server;
+  server_name _;
+  server_tokens off;
+
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # Container health check only. (An "if" rather than allow/deny, because "return" runs
+  # before nginx's access checks.)
+  location = /healthz {
+    access_log off;
+    if ($remote_addr != "127.0.0.1") {
+      return 403;
+    }
+    default_type text/plain;
+    return 200 "ok\n";
+  }
+
+  location / {
+    if ($from_cloudfront = 0) {
+      return 403;
+    }
+    try_files $uri $uri/ =404;
+  }
+
+  location /api/ {
+    if ($from_cloudfront = 0) {
+      return 403;
+    }
+    proxy_pass http://api:3000;
+    proxy_set_header Host $host;
+    client_max_body_size 16k;
+  }
+}

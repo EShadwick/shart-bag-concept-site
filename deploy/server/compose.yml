@@ -1,0 +1,39 @@
+# The app as it runs on the EC2 server: the same site and API image as local development,
+# with real DynamoDB instead of DynamoDB Local and nginx that only answers CloudFront.
+# Started by deploy.sh, which supplies the values below in an --env-file.
+#
+#   docker compose --env-file <file> -f deploy/server/compose.yml up -d --build --wait
+
+name: shart-bag-server
+
+services:
+  web:
+    image: nginx:1.27-alpine
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    environment:
+      ORIGIN_SECRET: ${ORIGIN_SECRET:?ORIGIN_SECRET is not set}
+      # Only substitute this variable in the template, never nginx's own $variables.
+      NGINX_ENVSUBST_FILTER: ORIGIN_SECRET
+    volumes:
+      - ../../site:/usr/share/nginx/html:ro
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    image: shart-bag-api:server
+    build:
+      context: ../../api
+    environment:
+      TABLE_NAME: ${TABLE_NAME:?TABLE_NAME is not set}
+      AWS_REGION: ${AWS_REGION:?AWS_REGION is not set}
+      # No keys here: the AWS SDK picks up the instance role through the metadata service.
+    restart: unless-stopped

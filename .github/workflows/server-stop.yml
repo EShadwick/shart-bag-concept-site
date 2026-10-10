@@ -1,0 +1,56 @@
+name: "Server: stop"
+
+# Stops the EC2 server. While stopped it costs only its disk and fixed IP (about $4.29/month),
+# keeps its data and keeps its link. Runs by itself every night in case it was left running;
+# a timer on the server powers it off at 09:30 UTC as a backstop if this run is late.
+on:
+  workflow_dispatch:
+  schedule:
+    # 09:17 UTC (3:17 a.m. Mountain daylight time, 2:17 a.m. standard time). Off the hour,
+    # because GitHub delays or drops scheduled runs most often at the top of the hour.
+    - cron: "17 9 * * *"
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: server-environment
+  cancel-in-progress: false
+
+env:
+  SERVER_NAME: shart-bag-server
+
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    environment: preview
+    timeout-minutes: 15
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: server-stop-${{ github.run_id }}
+
+      - name: Stop the server
+        id: stop
+        run: |
+          id=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$SERVER_NAME" "Name=instance-state-name,Values=pending,running" \
+            --query 'Reservations[].Instances[].InstanceId' --output text)
+          if [ -z "$id" ]; then
+            echo "result=Nothing to do: the server is already stopped (or does not exist)." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          aws ec2 stop-instances --instance-ids "$id" > /dev/null
+          aws ec2 wait instance-stopped --instance-ids "$id"
+          echo "result=Stopped instance $id. The link shows an error page until the server is started again." >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Server stop (${{ github.event_name }})"
+            echo ""
+            echo "${{ steps.stop.outputs.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"

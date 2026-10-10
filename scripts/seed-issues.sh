@@ -29,8 +29,11 @@ issue "CI pipeline" "devops" "API unit tests, site asset check, terraform fmt/va
 issue "AWS bootstrap" "infra" "State bucket, GitHub OIDC deploy role scoped to the preview environment, monthly budget alert." closed
 issue "Preview environment" "infra" "S3 + CloudFront with a password gate, Lambda function URL behind OAC, DynamoDB with TTL." closed
 issue "Deploy, tear down and export workflows" "devops" "Manual workflows to create the preview, export feedback to CSV, and delete everything." closed
+issue "Server option: EC2 with a fixed address" "infra,devops,client-request" "t4g.micro behind CloudFront with an Elastic IP, origin locked to CloudFront, deploys over SSM, start/stop/nightly stop workflows. See ADR 0005." closed
 issue "Replace or crop the golf field-test clip" "site,client-request" "Real golf brand logos are visible on the cart bag. Regenerate the clip or crop them out before wider sharing."
 issue "Accessibility pass" "site" "Keyboard-only and screen reader walkthrough of the site and the feedback form."
 issue "Add pricing" "site,blocked" "Waiting on the maker's quote."
 issue "Custom domain for the preview" "infra,future" "Route 53 or external DNS plus an ACM certificate in us-east-1 for CloudFront."
 issue "Shart Force Films: missions 2 to 4" "site,future" "First Date, Job Interview and Long Drive."
+issue "Friendly offline page for the stopped server" "infra" "While the server is stopped, CloudFront shows its own error page. Serve a short 'review is paused' page instead (origin failover to a small S3 bucket)."
+issue "OS patching for the server" "infra,devops" "Patch Amazon Linux on a schedule with Systems Manager Patch Manager, or rebuild the instance from the latest image."

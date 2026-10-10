@@ -54,6 +54,9 @@ jobs:
       - name: Validate preview
         working-directory: infra/preview
         run: terraform init -backend=false -input=false && terraform validate
+      - name: Validate server
+        working-directory: infra/server
+        run: terraform init -backend=false -input=false && terraform validate
 
   compose:
     name: Docker Compose smoke test
@@ -84,3 +87,38 @@ jobs:
       - name: Stop
         if: always()
         run: docker compose down -v
+
+  server:
+    name: Server scripts and origin gate
+    runs-on: ubuntu-latest
+    needs: [api, site]
+    env:
+      ORIGIN_SECRET: ci-origin-secret
+      TABLE_NAME: ci-not-used
+      AWS_REGION: us-east-1
+      HTTP_PORT: "8081"
+    steps:
+      - uses: actions/checkout@v7
+      - name: ShellCheck
+        run: |
+          command -v shellcheck > /dev/null || sudo apt-get install -y shellcheck
+          shellcheck deploy/server/*.sh scripts/*.sh
+      - name: Start the server stack
+        run: docker compose -f deploy/server/compose.yml up -d --build --wait
+      - name: nginx only answers requests that carry the CloudFront origin secret
+        run: |
+          status() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+          ok=(-H "X-Origin-Verify: $ORIGIN_SECRET")
+          test "$(status http://localhost:8081/)" = "403"
+          test "$(status -H 'X-Origin-Verify: wrong' http://localhost:8081/)" = "403"
+          test "$(status "${ok[@]}" http://localhost:8081/)" = "200"
+          test "$(status "${ok[@]}" http://localhost:8081/media/golf.mp4)" = "200"
+          test "$(status "${ok[@]}" http://localhost:8081/api/health)" = "200"
+          test "$(status http://localhost:8081/api/health)" = "403"
+          test "$(status "${ok[@]}" http://localhost:8081/healthz)" = "403"
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f deploy/server/compose.yml logs
+      - name: Stop
+        if: always()
+        run: docker compose -f deploy/server/compose.yml down -v

@@ -42,7 +42,7 @@ gh secret set PREVIEW_PASSWORD    --env preview          # prompts; 12+ characte
 
 Or in the browser: **Settings → Environments → New environment → `preview`**, then add the variables and secret there and under **Settings → Secrets and variables → Actions**.
 
-Optional: on the `preview` environment, add yourself as a required reviewer so every deploy and teardown waits for your approval.
+Optional: on the `preview` environment, add yourself as a required reviewer so every deploy and teardown waits for your approval. The nightly **Server: stop** would then wait for approval too; the timer on the server still stops it at 09:30 UTC.
 
 ## 2. Run locally
 
@@ -66,7 +66,7 @@ Unit tests without Docker: `cd api && npm ci && npm test`.
 
 ## 4. Read feedback
 
-**Actions → Export feedback → Run workflow**, then download the `client-feedback-<run id>` artifact (CSV, newest first).
+**Actions → Export feedback → Run workflow** (source `preview`), then download the `preview-feedback-<run id>` artifact (CSV, newest first).
 
 ## 5. End a review
 
@@ -74,9 +74,49 @@ Unit tests without Docker: `cd api && npm ci && npm test`.
 
 The workflow exports feedback to a CSV artifact (kept 90 days), then deletes the site bucket and files, CloudFront distribution, password function, Lambda, logs and the feedback table. The link stops working. Deleting a CloudFront distribution takes several minutes; the run waits for it.
 
-## 6. Change the password
+## 6. Server environment (EC2, fixed link)
 
-Update the `PREVIEW_PASSWORD` secret on the `preview` environment, then run **Deploy preview** again. The old password stops working once CloudFront picks up the new function, usually within a few minutes.
+Design and costs: [ADR 0005](adr/0005-ec2-server-option.md). It uses the same GitHub `preview` environment, deploy role and password secret as the preview. The repository must stay public: the server pulls the code with an anonymous `git clone`.
+
+**One time, if the bootstrap was applied before the server option existed:** re-apply it so the deploy role gets the EC2 and Systems Manager permissions.
+
+```bash
+aws login
+cd infra/bootstrap
+terraform apply   # expect: 0 to add, 2 to change (the deploy role and its policy), 0 to destroy
+```
+
+| Task | How | Notes |
+|---|---|---|
+| Create it, or ship the latest commit | Actions → **Server: create or update** | First run about 15 minutes. Later runs apply infrastructure changes, start the server if needed and put the commit live through SSM. |
+| Start | Actions → **Server: start** | About 2 minutes. Same link every time. |
+| Stop | Actions → **Server: stop** | Also runs every night at 09:17 UTC. A timer on the server powers it off at 09:30 UTC in case that run is late or skipped. |
+| Export feedback | Actions → **Export feedback** → `server` | Download the `server-feedback-<run id>` artifact. |
+| Delete | Actions → **Server: delete** → type `delete` | Exports feedback, then removes the server, its IP, network, table and link. Ends all server charges. |
+
+From Git Bash, the same with the GitHub CLI:
+
+```bash
+gh workflow run server-deploy.yml
+gh workflow run server-start.yml
+gh workflow run server-stop.yml
+gh workflow run export-feedback.yml -f source=server
+gh workflow run server-delete.yml -f confirm=delete
+gh run watch
+```
+
+Deploy checklist (after the first create):
+
+- The run's "Security checks" step passed: 401 without a password, and the server's IP does not answer directly.
+- The link asks for the username and password, then shows the site; both clips play; the film page opens.
+- A feedback submission shows "Thanks. Your feedback was saved." and appears in **Export feedback** → `server`.
+- After **Server: stop**, the link shows an error page; after **Server: start**, it works again with no other changes.
+
+Looking at the server without SSH: AWS console → Systems Manager → Session Manager → Start session → `shart-bag-server`. Useful commands: `sudo docker compose -f /opt/shart-bag/app/deploy/server/compose.yml ps` and `sudo cat /var/log/cloud-init-output.log` (first boot).
+
+## 7. Change the password
+
+Update the `PREVIEW_PASSWORD` secret on the `preview` environment, then run **Deploy preview** (and/or **Server: create or update**) again. The old password stops working once CloudFront picks up the new function, usually within a few minutes.
 
 ## Troubleshooting
 
@@ -88,9 +128,13 @@ Update the `PREVIEW_PASSWORD` secret on the `preview` environment, then run **De
 | Link errors or times out right after deploy | CloudFront still propagating | Wait a few minutes and retry |
 | Password prompt keeps coming back | Wrong username or password | Username is `client`; check the secret value |
 | Feedback form says "Could not save feedback" | Lambda error | Check the function's CloudWatch log group `/aws/lambda/shart-bag-preview-feedback` |
+| Server link shows a 502 or 504 error | Server is stopped, or still booting | Run **Server: start**, or wait a minute |
+| "Server: create or update" fails at "Put this commit live" | First-boot setup or deploy script failed on the server | The step prints the script output. More detail: Session Manager → `sudo cat /var/log/cloud-init-output.log` |
+| Server workflows fail with `AccessDenied` on EC2 or SSM | Bootstrap not re-applied since the server option was added | Re-apply `infra/bootstrap` (section 6) |
+| Nightly stop stopped running | GitHub disables scheduled workflows after 60 days without repository activity | Actions → **Server: stop** → Enable workflow |
 
 ## Removing everything
 
-1. Run **Tear down preview**.
+1. Run **Tear down preview** and **Server: delete**.
 2. Empty the state bucket, including old versions (S3 console → bucket → Empty).
 3. `cd infra/bootstrap && terraform destroy`.

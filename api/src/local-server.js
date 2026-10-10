@@ -1,6 +1,7 @@
-// Local development server used by Docker Compose.
+// HTTP server used by Docker Compose, on a laptop and on the EC2 server.
 // Turns plain HTTP requests into Lambda function URL events so the exact same
-// handler runs on a laptop and in AWS. Points at DynamoDB Local.
+// handler runs everywhere. With DYNAMODB_ENDPOINT set (local development) it talks to
+// DynamoDB Local and creates the table; without it, it uses the real table in AWS.
 
 import http from 'node:http';
 import { CreateTableCommand, DescribeTableCommand, ResourceNotFoundException } from '@aws-sdk/client-dynamodb';
@@ -55,5 +56,6 @@ const server = http.createServer((req, res) => {
   });
 });
 
-await ensureTable();
+// Only DynamoDB Local needs its table created. In AWS, Terraform owns the table.
+if (process.env.DYNAMODB_ENDPOINT) await ensureTable();
 server.listen(PORT, () => console.log(`feedback api listening on :${PORT}, table ${tableName}`));

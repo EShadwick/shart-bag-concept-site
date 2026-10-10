@@ -25,3 +25,4 @@ Docker is still used where it adds value: the local environment and the CI smoke
 - The API is written against the Lambda event shape, so local development needs a small adapter (`local-server.js`).
 - A new CloudFront distribution takes a few minutes to propagate, so "Deploy preview" is not instant.
 - If the project later needs server-side rendering or long-running work, revisit containers.
+- Revisited in ADR 0005: the client later asked for a link that never changes, so an EC2 server option was added alongside the preview. The preview remains the zero-cost choice.

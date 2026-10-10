@@ -1,0 +1,75 @@
+name: "Server: start"
+
+# Manual only. Starts the stopped EC2 server and waits until the link works (about 2 minutes).
+# The link is the same every time.
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: server-environment
+  cancel-in-progress: false
+
+env:
+  SERVER_NAME: shart-bag-server
+  DISTRIBUTION_COMMENT: Shart Bag concept server
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    environment: preview
+    timeout-minutes: 15
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: server-start-${{ github.run_id }}
+
+      - name: Start the server
+        run: |
+          id=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=$SERVER_NAME" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+            --query 'Reservations[].Instances[].InstanceId' --output text)
+          if [ -z "$id" ]; then
+            echo "::error::No server found. Run 'Server: create or update' first."
+            exit 1
+          fi
+          state=$(aws ec2 describe-instances --instance-ids "$id" --query 'Reservations[0].Instances[0].State.Name' --output text)
+          if [ "$state" = "stopping" ]; then aws ec2 wait instance-stopped --instance-ids "$id"; fi
+          aws ec2 start-instances --instance-ids "$id" > /dev/null
+          aws ec2 wait instance-running --instance-ids "$id"
+          echo "Instance $id is running"
+
+      - name: Wait for the link to answer
+        id: link
+        env:
+          PASS: ${{ secrets.PREVIEW_PASSWORD }}
+        run: |
+          domain=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Comment=='$DISTRIBUTION_COMMENT'].DomainName | [0]" --output text)
+          url="https://$domain/"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          # Docker brings the app back on its own once the instance boots.
+          for _ in $(seq 1 36); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -u "client:$PASS" "$url" || true)
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::$url did not return 200 within 6 minutes (last status: $code)"
+          exit 1
+
+      - name: Summary
+        run: |
+          {
+            echo "## Server is running"
+            echo ""
+            echo "Link: ${{ steps.link.outputs.url }}"
+            echo ""
+            echo "Username: \`client\`. Password: the PREVIEW_PASSWORD secret."
+            echo ""
+            echo "Run **Server: stop** when you are done. It also stops by itself every night around 09:30 UTC."
+          } >> "$GITHUB_STEP_SUMMARY"

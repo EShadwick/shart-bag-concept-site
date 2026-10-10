@@ -1,8 +1,14 @@
 name: Export feedback
 
-# Manual only. Downloads the current client feedback as a CSV without touching the preview.
+# Manual only. Downloads the current client feedback as a CSV without touching anything else.
 on:
   workflow_dispatch:
+    inputs:
+      source:
+        description: Which environment's feedback to export
+        type: choice
+        options: [preview, server]
+        default: preview
 
 permissions:
   id-token: write
@@ -13,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: preview
     env:
-      TABLE: shart-bag-preview-feedback
+      TABLE: shart-bag-${{ inputs.source }}-feedback
     steps:
       - uses: actions/checkout@v7
 
@@ -31,10 +37,10 @@ jobs:
         run: |
           aws dynamodb scan --table-name "$TABLE" --output json > feedback.json
           node scripts/feedback-to-csv.mjs feedback.json > feedback.csv
-          echo "Exported $(($(wc -l < feedback.csv) - 1)) feedback rows" >> "$GITHUB_STEP_SUMMARY"
+          echo "Exported $(($(wc -l < feedback.csv) - 1)) feedback rows from $TABLE" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: client-feedback-${{ github.run_id }}
+          name: ${{ inputs.source }}-feedback-${{ github.run_id }}
           path: feedback.csv
           retention-days: 30

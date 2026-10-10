@@ -74,9 +74,11 @@ jobs:
         id: tf
         working-directory: infra/preview
         run: |
-          echo "url=$(terraform output -raw preview_url)" >> "$GITHUB_OUTPUT"
-          echo "bucket=$(terraform output -raw site_bucket)" >> "$GITHUB_OUTPUT"
-          echo "dist=$(terraform output -raw distribution_id)" >> "$GITHUB_OUTPUT"
+          {
+            echo "url=$(terraform output -raw preview_url)"
+            echo "bucket=$(terraform output -raw site_bucket)"
+            echo "dist=$(terraform output -raw distribution_id)"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Upload site files
         run: aws s3 sync site/ "s3://${{ steps.tf.outputs.bucket }}/" --delete

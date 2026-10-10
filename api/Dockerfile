@@ -1,4 +1,4 @@
-# Local development image for the feedback API.
+# Image for the feedback API, used by local development and by the EC2 server.
 # Node 24 matches the nodejs24.x Lambda runtime used in AWS.
 ARG NODE_VERSION=24
 FROM node:${NODE_VERSION}-alpine

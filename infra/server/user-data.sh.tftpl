@@ -1,0 +1,18 @@
+#!/bin/bash
+# First boot only (cloud-init runs this once). Everything else lives in the repo under
+# deploy/server/ so it is versioned, reviewed and re-run on every deploy.
+set -euxo pipefail
+export HOME=/root
+
+mkdir -p /opt/shart-bag
+cat > /etc/shart-bag.env <<'EOF'
+TABLE_NAME=${table_name}
+ORIGIN_SECRET_PARAM=${origin_secret_param}
+EOF
+
+dnf install -y git
+git clone --quiet ${repo_url} /opt/shart-bag/app
+
+# Called through bash so they run even if the files lost their executable bit (Windows checkouts).
+bash /opt/shart-bag/app/deploy/server/setup-host.sh
+bash /opt/shart-bag/app/deploy/server/deploy.sh
